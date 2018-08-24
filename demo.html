@@ -1,0 +1,183 @@
+<html>
+	<head>
+		<title>My first three.js app</title>
+		<style>
+			body { margin: 0; }
+			canvas { width: 100%; height: 100% }
+		</style>
+	</head>
+	<body>
+		<script src="js/three.js"></script>
+		<script src="js/controls/OrbitControls.js"></script>
+		<script src="js/controls/DragControls.js"></script>
+		<script src="js/controls/TransformControls.js"></script>
+		<script>
+			var scene = new THREE.Scene();
+			var camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 2000 );
+			camera.position.set(10,10,800);
+
+			controls = new THREE.OrbitControls( camera );
+
+			var renderer = new THREE.WebGLRenderer();
+			renderer.setSize( window.innerWidth, window.innerHeight );
+			document.body.appendChild( renderer.domElement );
+
+			// var geometry = new THREE.BoxGeometry( 1, 1, 1 );
+			// var material = new THREE.MeshBasicMaterial( { color: 0xff0000 } );
+			// var cube = new THREE.Mesh( geometry, material );
+			// scene.add( cube );
+
+			var axes = new THREE.AxesHelper(100);
+			scene.add(axes);
+
+			var gridHelper = new THREE.GridHelper( 1000, 20, 'blue', 'gray' );
+			gridHelper.position.y = 0;
+			gridHelper.position.x = 0;
+			scene.add( gridHelper );
+
+			//create a blue LineBasicMaterial
+			// var material = new THREE.LineBasicMaterial( { color: 0x0000ff,
+			// 	linewidth: 4
+			//  } );
+			// geometry = new THREE.Geometry();
+			// geometry.vertices.push(new THREE.Vector3( 1, 0, 0) );
+			// geometry.vertices.push(new THREE.Vector3( 0, 1, 0) );
+			// geometry.vertices.push(new THREE.Vector3( 0.5, 0.5, 0.5) );
+			// geometry.vertices.push(new THREE.Vector3( 1, 1, 1) );
+
+			// var line = new THREE.Line( geometry, material );
+			// scene.add( line );
+
+
+			var geometry = new THREE.BoxGeometry(20,20,20);//盒子模型
+			for ( var i = 0; i < 100; i ++ ) {
+			    var material = new THREE.MeshBasicMaterial({color:"gray"});//材料
+			    var mesh = new THREE.Mesh( geometry, material );
+			    mesh.position.x = ( Math.random() - 0.5 ) * 1000;
+			    mesh.position.y = ( Math.random() - 0.5 ) * 1000;
+			    mesh.position.z = ( Math.random() - 0.5 ) * 1000;
+			    scene.add( mesh );
+			}
+
+			raycaster = new THREE.Raycaster();//光线投射器
+			mouse = new THREE.Vector2();//二维向量 
+			document.addEventListener('mousemove', function(){
+			    event.preventDefault();
+			    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+			    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+			}, false);
+
+			var projectiveObj;//定义上次投射到的对象
+			/**
+			 * 根据光投射器判断鼠标所在向量方向是否穿过物体
+			 * @param {*} raycaster 光投射器
+			 * @param {*} scene     场景
+			 * @param {*} camera    相机
+			 * @param {*} mouse     鼠标位置对应的二维向量
+			 */
+			function renderRaycasterObj(raycaster,scene,camera,mouse) {
+			    raycaster.setFromCamera(mouse, camera);
+
+			    var projectiveObjOld = projectiveObj;
+			    var intersects = raycaster.intersectObjects(scene.children);
+			    if (intersects.length > 0) {
+			        var currentProjectiveObjT = intersects[0].object;
+			        if (projectiveObj != currentProjectiveObjT) {
+			            if((currentProjectiveObjT instanceof THREE.AxisHelper) || (currentProjectiveObjT instanceof THREE.GridHelper)){
+			                //穿过的是坐标轴线和网格线
+			                return;
+			            }
+			            projectiveObj = intersects[0].object;
+			        }
+			    } else {
+			        projectiveObj = null;
+			    }
+
+			    if(projectiveObj) {
+			    	projectiveObj.material.color.set("#dd830d");
+			    }
+			    if(projectiveObjOld && projectiveObjOld != projectiveObj && projectiveObjOld.hasChecked != true) {
+			    	projectiveObjOld.material.color.set("gray");
+			    } 
+			}
+
+			// camera.position.z = 5;
+
+			var animate = function () {
+				requestAnimationFrame( animate );
+
+				cube.rotation.x += 0.01;
+				cube.rotation.y += 0.01;
+
+				line.rotation.x += 0.01;
+				line.rotation.y += 0.01;
+
+
+				renderer.render( scene, camera );
+			};
+
+			function render() {
+
+			    requestAnimationFrame(render);
+
+			    renderRaycasterObj(raycaster,scene,camera,mouse);//渲染光投射器投射到的对象
+
+			    renderer.render( scene, camera);
+
+			}
+
+			// 添加拖拽控件
+			function initDragControls() {
+			    // 添加平移控件
+			    var transformControls = new THREE.TransformControls(camera, renderer.domElement);
+			    scene.add(transformControls);
+			 
+			    // 过滤不是 Mesh 的物体,例如辅助网格对象
+			    var objects = [];
+			    for (let i = 0; i < scene.children.length; i++) {
+			        if (scene.children[i].isMesh) {
+			            objects.push(scene.children[i]);
+			        }
+			    }
+			    // 初始化拖拽控件
+			    var dragControls = new THREE.DragControls(objects, camera, renderer.domElement);
+			 
+			    // 鼠标略过事件
+			    dragControls.addEventListener('hoveron', function (event) {
+			        // 让变换控件对象和选中的对象绑定
+			        transformControls.attach(event.object);
+			    });
+			    // 开始拖拽
+			    dragControls.addEventListener('dragstart', function (event) {
+			        controls.enabled = false;
+			    });
+			    // 拖拽结束
+			    dragControls.addEventListener('dragend', function (event) {
+			        controls.enabled = true;
+			    });
+			}
+
+			initDragControls();
+			render();
+
+			window.addEventListener( 'click', function(){
+                if(projectiveObj){
+                    console.log(projectiveObj);
+                    if(projectiveObj.hasChecked){
+                        projectiveObj.hasChecked = false;
+                        projectiveObj.material.color.set("gray");
+                    } else {
+                        projectiveObj.hasChecked = true;
+                        projectiveObj.material.color.set("#dd830d");
+                    }
+                }
+
+            }, false );
+
+
+
+			
+			// animate();
+		</script>
+	</body>
+</html>
