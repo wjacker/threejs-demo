@@ -544,6 +544,10 @@
 		domElement.addEventListener( "touchcancel", onPointerUp, false );
 		domElement.addEventListener( "touchleave", onPointerUp, false );
 
+		var domOffset = domElement.getBoundingClientRect();
+		var clientWidth = domElement.clientWidth;
+		var clientHeight = domElement.clientHeight;
+
 
 
 		this.buildBoxBorder = function() {
@@ -716,7 +720,7 @@
 			// 	eye.copy( camPosition ).sub( worldPosition ).normalize();
 			// }
 
-			if(scope.axis == "XY") {
+			if(scope.axis == "XY" || scope.axis == "Z") {
 				this.calculatePosition();
 			}
 			
@@ -926,8 +930,10 @@
 				object.position.add( point );
 			} else if ( scope.axis === "R" ) {
 				plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
-				mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-			  	mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+				mouse.x = ((event.clientX - domOffset.left)/ clientWidth) * 2 - 1;
+				mouse.y = -((event.clientY - domOffset.top) / clientHeight) * 2 + 1;
+				// mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+			 //  	mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 			  	ray.setFromCamera(mouse, camera);
 			  	ray.ray.intersectPlane(plane, planeIntersect);
 
