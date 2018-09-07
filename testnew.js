@@ -532,22 +532,27 @@ module.exports = !function(t) {
         var c = n("PopGeometry");
         n.d(e, "l",
         function() {
+            //PopModel;
             return c.c
         }),
         n.d(e, "m",
         function() {
+            //PopModelBlock
             return c.d
         }),
         n.d(e, "k",
         function() {
+            //PopMesh
             return c.b
         }),
         n.d(e, "j",
         function() {
+            //PopGeometry
             return c.a
         }),
         n.d(e, "n",
         function() {
+            //PopPhongMaterial
             return c.e
         });
         var h = n("3JDn");
@@ -2763,13 +2768,13 @@ module.exports = !function(t) {
         "use strict";
         e.a = "#define PHONG\\nvarying vec3 vViewPosition;\\n#ifndef FLAT_SHADED\\n\\tvarying vec3 vNormal;\\n#endif\\n#include <common>\\n#include <uv_pars_vertex>\\n#include <uv2_pars_vertex>\\n#include <displacementmap_pars_vertex>\\n#include <envmap_pars_vertex>\\n#include <color_pars_vertex>\\n#include <fog_pars_vertex>\\n#include <morphtarget_pars_vertex>\\n#include <skinning_pars_vertex>\\n#include <shadowmap_pars_vertex>\\n#include <logdepthbuf_pars_vertex>\\n#include <clipping_planes_pars_vertex>\\nvoid main() {\\n\\t#include <uv_vertex>\\n\\t#include <uv2_vertex>\\n\\t#include <color_vertex>\\n\\t#include <beginnormal_vertex>\\n\\t#include <morphnormal_vertex>\\n\\t#include <skinbase_vertex>\\n\\t#include <skinnormal_vertex>\\n\\t#include <defaultnormal_vertex>\\n#ifndef FLAT_SHADED\\n\\tvNormal = normalize( transformedNormal );\\n#endif\\n\\t#include <begin_vertex>\\n\\t#include <morphtarget_vertex>\\n\\t#include <skinning_vertex>\\n\\t#include <displacementmap_vertex>\\n\\t#include <project_vertex>\\n\\t#include <logdepthbuf_vertex>\\n\\t#include <clipping_planes_vertex>\\n\\tvViewPosition = - mvPosition.xyz;\\n\\t#include <worldpos_vertex>\\n\\t#include <envmap_vertex>\\n\\t#include <shadowmap_vertex>\\n\\t#include <fog_vertex>\\n}\\n"
     },
-    "4z2A": function(t, e, n) {
+    "PopGroups": function(t, e, n) {
         "use strict";
         n.d(e, "a",
         function() {
             return r
         });
-        var i = n("Mt6s"),
+        var i = n("PopChunks"),
         r = function() {
             function t() {}
             return t.prototype.readFromStream = function(t) {
@@ -2777,7 +2782,7 @@ module.exports = !function(t) {
                 this.minLevel = t.readSwappedInt(),
                 this.maxLevel = t.readSwappedInt();
                 for (var e = t.readSwappedInt(), n = 0; n < e; n++) {
-                    var r = new i.a;
+                    var r = new PopChunks();
                     r.readFromStream(t),
                     this.chunks.push(r)
                 }
@@ -3230,14 +3235,38 @@ module.exports = !function(t) {
         "use strict";
         e.a = "#if defined( DITHERING )\\n  gl_FragColor.rgb = dithering( gl_FragColor.rgb );\\n#endif\\n"
     },
-    "5mWq": function(t, e, n) {
+    "PopModelData": function(t, e, n) {
         "use strict";
         n.d(e, "a",
         function() {
             return a
         });
-        var i = n("lUBy"),
-        r = n("Q2ls"),
+        // var i = n("lUBy")
+        function inlineFunction1(t) {
+            for (var e = "",
+            n = 0; n < t.length; n++) {
+                var i = t[n];
+                if (i < 128) e += String.fromCharCode(i);
+                else if (i > 191 && i < 224) e += String.fromCharCode((31 & i) << 6 | 63 & t[n + 1]),
+                n += 1;
+                else if (i > 223 && i < 240) e += String.fromCharCode((15 & i) << 12 | (63 & t[n + 1]) << 6 | 63 & t[n + 2]),
+                n += 2;
+                else {
+                    var r = ((7 & i) << 18 | (63 & t[n + 1]) << 12 | (63 & t[n + 2]) << 6 | 63 & t[n + 3]) - 65536;
+                    e += String.fromCharCode(r >> 10 | 55296, 1023 & r | 56320),
+                    n += 3
+                }
+            }
+            return e
+        }
+        // r = n("Q2ls"),
+        function inlineFunction1(t) {
+            var r = new Int8Array(4);
+            a = new Int32Array(r.buffer, 0, 1);
+            o = new Float32Array(r.buffer, 0, 1);
+            return a[0] = t, o[0]
+        }
+
         a = function() {
             function t(t) {
                 this.data = t,
@@ -3261,10 +3290,10 @@ module.exports = !function(t) {
                 return this.readByte() | this.readByte() << 8 | this.readByte() << 16 | this.readByte() << 24
             },
             t.prototype.readSwappedFloat = function() {
-                return Object(r.a)(this.readSwappedInt())
+                return inlineFunction1(this.readSwappedInt())
             },
             t.prototype.readUTFBytes = function(t) {
-                return Object(i.a)(this.readBytes(t))
+                return inlineFunction1(this.readBytes(t))
             },
             t.prototype.readZigzag = function() {
                 var t = this.readVarint();
@@ -8166,7 +8195,7 @@ Geometry: function(t, e, n) {
         "use strict";
         e.a = "varying vec2 vUv;\\nuniform vec2 texelSize;\\nuniform sampler2D sourceMap;\\nvoid main() {\\n    vec3 color = vec3(0.0);\\n    color += texture2D(sourceMap, vUv + texelSize * vec2(0.0, 0.0)).rgb;\\n    color += texture2D(sourceMap, vUv + texelSize * vec2(1.0, 0.0)).rgb;\\n    color += texture2D(sourceMap, vUv + texelSize * vec2(0.0, 1.0)).rgb;\\n    color += texture2D(sourceMap, vUv + texelSize * vec2(1.0, 1.0)).rgb;\\n    color *= 0.25;\\n    gl_FragColor = vec4(color, 1.0);\\n}\\n"
     },
-    DLHX: function(t, e, n) {
+    PopPhongMaterial: function(t, e, n) {
         "use strict";
         n.d(e, "a",
         function() {
@@ -8415,7 +8444,7 @@ Geometry: function(t, e, n) {
         r.prototype = Object.create(o.a.prototype),
         r.prototype.constructor = r
     },
-    DgFU: function(t, e, n) {
+    PopModel: function(t, e, n) {
         "use strict";
 
         function i(t) {
@@ -8429,9 +8458,9 @@ Geometry: function(t, e, n) {
         function() {
             return f
         });
-        var a = n("K7+M"),
-        o = n("5mWq"),
-        s = n("VHwN"),
+        var a = n("PopModelItem1"),
+        o = n("PopModelData"),
+        s = n("PopModelBlock"),
         u = this && this.__extends ||
         function() {
             var t = Object.setPrototypeOf || {
@@ -8493,7 +8522,7 @@ Geometry: function(t, e, n) {
                     var n = u,
                     i = 3 * a[e];
                     return u += i,
-                    new s.a(e, t, n, i)
+                    new PopModelBlock(e, t, n, i)
                 }),
                 this.levelPrecisions = [],
                 this.currentVertexCount = 0,
@@ -8551,9 +8580,9 @@ Geometry: function(t, e, n) {
             },
             t.decode = function(e) {
                 var n = new Uint8Array(e),
-                i = new a.a;
-                i.readFromStream(new o.a(n));
-                var r = new t(i.header);
+                i = new PopModelItem1();
+                i.readFromStream(new PopModelData(n));
+                var r = new PopModel(i.header);
                 return i.groups.forEach(function(t) {
                     return r.addGroup(t)
                 }),
@@ -10919,22 +10948,22 @@ Geometry: function(t, e, n) {
             t
         } ()
     },
-    "K7+M": function(t, e, n) {
+    "PopModelItem1": function(t, e, n) {
         "use strict";
         n.d(e, "a",
         function() {
             return a
         });
-        var i = n("y0Ch"),
-        r = n("4z2A"),
+        // var i = n("PopModelHeader"),
+        r = n("PopGroups"),
         a = function() {
             function t() {}
             return t.prototype.readFromStream = function(t) {
-                this.header = new i.a,
+                this.header = new PopModelHeader(),
                 this.header.readFromStream(t),
                 this.groups = [];
                 for (var e = 0; e < this.header.attributes.groupCount; e++) {
-                    var n = new r.a;
+                    var n = new PopGroups();
                     n.readFromStream(t),
                     this.groups.push(n)
                 }
@@ -11184,10 +11213,10 @@ Geometry: function(t, e, n) {
             switch (e) {
             case c.a.FRONT:
             case c.a.BACK:
-                return new s.J(t.x, t.z, t.y);
+                return new Vector3(t.x, t.z, t.y);
             case c.a.TOP:
             case c.a.BOTTOM:
-                return new s.J(t.x, t.y, t.z);
+                return new Vector3(t.x, t.y, t.z);
             default:
                 throw new Error("type not defined: " + e)
             }
@@ -11196,13 +11225,13 @@ Geometry: function(t, e, n) {
         function r(t, e) {
             switch (e) {
             case c.a.TOP:
-                return new s.J(0, 0, t.z / 2);
+                return new Vector3(0, 0, t.z / 2);
             case c.a.BOTTOM:
-                return new s.J(0, 0, -t.z / 2);
+                return new Vector3(0, 0, -t.z / 2);
             case c.a.FRONT:
-                return new s.J(0, -t.y / 2, 0);
+                return new Vector3(0, -t.y / 2, 0);
             case c.a.BACK:
-                return new s.J(0, t.y / 2, 0);
+                return new Vector3(0, t.y / 2, 0);
             default:
                 throw new Error("type not defined: " + e)
             }
@@ -16366,27 +16395,27 @@ Mnzq: function(t, e, n) {
         t
     } ()
 },
-Mt6s: function(t, e, n) {
+PopChunks: function(t, e, n) {
     "use strict";
     n.d(e, "a",
     function() {
         return o
     });
-    var i = n("5mWq"),
-    r = n("yat2"),
-    a = n("P2UX"),
+    var i = n("PopModelData"),
+    r = n("PopChunksContent"),
+    a = n("PopChunksHeader"),
     o = function() {
         function t() {}
         return t.prototype.readFromStream = function(t) {
-            this.header = new a.a,
+            this.header = new PopChunksHeader(),
             this.header.readFromStream(t);
             var e = this.header.chunkDataLength,
             n = t.readBytes(e),
             o = n.length;
             if (o < e) throw new Error("not enough data! we need " + e + " bytes, but only read " + o + " bytes");
             var s = this.decompress(n, this.header.compressType);
-            this.content = new r.a,
-            this.content.readFromStream(new i.a(s))
+            this.content = new PopChunksContent(),
+            this.content.readFromStream(new PopModelData(s))
         },
         t.prototype.decompress = function(t, e) {
             return t
@@ -17230,7 +17259,7 @@ P0pb: function(t, e, n) {
     } ();
     new h
 },
-P2UX: function(t, e, n) {
+PopChunksHeader: function(t, e, n) {
     "use strict";
     n.d(e, "a",
     function() {
@@ -20733,7 +20762,7 @@ VHZC: function(t, e, n) {
     "use strict ";
     e.a = "uniform vec3 lightPos;\\nvarying vec4 vWorldPosition;\\n # include < common > \\n # include < packing > \\n # include < clipping_planes_pars_fragment > \\nvoid main() {\\n\\ t # include < clipping_planes_fragment > \\n\\ tgl_FragColor = packDepthToRGBA(length(vWorldPosition.xyz - lightPos.xyz) / 1000.0);\\n}\\n "
 },
-VHwN: function(t, e, n) {
+PopModelBlock: function(t, e, n) {
     "use strict ";
     n.d(e, "a ",
     function() {
@@ -20952,28 +20981,29 @@ Vbxv: function(t, e, n) {
         }
     }
 },
-PopGeometry: function(t, e, n) {
+PopGeometry: function(t, model, n) {
     "use strict ";
-    var i = n("DgFU "),
-    r = n("VHwN "),
+    var i = n("PopModel "),
+    r = n("PopModelBlock "),
     a = function(t) {
-            function e(e) {
+            function e(model) {
                 var n = t.call(this) || this;
                 return n.isPopGeometry = true,
-                n.setModel(e),
+                n.setModel(model),
                 n
             }
-            return r(e, t),
-            e.prototype.setModel = function(t) {
+            return r(model, t),
+            e.prototype.setModel = function(model) {
                 var e = this;
-                t && (this.model = t, 
-                    this.setIndex(new new BufferAttribute(t.indices, 1, false)), 
-                    this.addAttribute("uv", new BufferAttribute(t.textures, 2, false)), 
-                    this.addAttribute("normal", new BufferAttribute(t.normals, 3, false)), 
-                    this.addAttribute("position", new BufferAttribute(t.vertices, 3, false)), 
-                    t.blocks.forEach(function(t) {
+                model && (this.model = model, 
+                    this.setIndex(new new BufferAttribute(model.indices, 1, false)), 
+                    this.addAttribute("uv", new BufferAttribute(model.textures, 2, false)), 
+                    this.addAttribute("normal", new BufferAttribute(model.normals, 3, false)), 
+                    this.addAttribute("position", new BufferAttribute(model.vertices, 3, false)), 
+                    model.blocks.forEach(function(t) {
                     return e.addGroup(t.start, t.count, t.index)
-                }), this.computeBoundingBox(), this.computeMetadata())
+                    }), 
+                    this.computeBoundingBox(), this.computeMetadata())
             },
             e.prototype.computeMetadata = function() {
                 var t = this.model.attributes,
@@ -21039,7 +21069,7 @@ PopGeometry: function(t, e, n) {
             e
         } (i.e),
     o = n("PopMesh "),
-    s = n("DLHX ");
+    s = n("PopPhongMaterial ");
     n.d(e, "c ",
     function() {
         return i.a
@@ -21058,6 +21088,7 @@ PopGeometry: function(t, e, n) {
     }),
     n.d(e, "e ",
     function() {
+        //PopPhongMaterial
         return s.a
     })
 },
@@ -21988,7 +22019,7 @@ BufferAttribute: function(t, e, n) {
     f.prototype = Object.create(i.prototype),
     f.prototype.constructor = f
 },
-XgdN: function(t, e, n) {
+PopModelAttributes: function(t, e, n) {
     "use strict ";
     n.d(e, "a ",
     function() {
@@ -32365,18 +32396,18 @@ xs6E: function(t, e, n) {
     var r = n("RBSo"),
     a = n("_Math")
 },
-y0Ch: function(t, e, n) {
+PopModelHeader: function(t, e, n) {
     "use strict";
     n.d(e, "a",
     function() {
         return r
     });
-    var i = n("XgdN"),
+    var i = n("PopModelAttributes"),
     r = function() {
         function t() {}
         return t.prototype.readFromStream = function(t) {
             this.version = t.readSwappedShort(),
-            this.attributes = new i.a,
+            this.attributes = new PopModelAttributes(),
             this.attributes.readFromStream(t)
         },
         t
@@ -32831,20 +32862,177 @@ yZzt: function(t, e, n) {
     "use strict";
     e.a = "#ifdef USE_SHADOWMAP\\n\\t#if NUM_DIR_LIGHTS > 0\\n\\t\\tuniform sampler2D directionalShadowMap[ NUM_DIR_LIGHTS ];\\n\\t\\tvarying vec4 vDirectionalShadowCoord[ NUM_DIR_LIGHTS ];\\n\\t#endif\\n\\t#if NUM_SPOT_LIGHTS > 0\\n\\t\\tuniform sampler2D spotShadowMap[ NUM_SPOT_LIGHTS ];\\n\\t\\tvarying vec4 vSpotShadowCoord[ NUM_SPOT_LIGHTS ];\\n\\t#endif\\n\\t#if NUM_POINT_LIGHTS > 0\\n\\t\\tuniform sampler2D pointShadowMap[ NUM_POINT_LIGHTS ];\\n\\t\\tvarying vec4 vPointShadowCoord[ NUM_POINT_LIGHTS ];\\n\\t#endif\\n\\tfloat texture2DCompare( sampler2D depths, vec2 uv, float compare ) {\\n\\t\\treturn step( compare, unpackRGBAToDepth( texture2D( depths, uv ) ) );\\n\\t}\\n\\tfloat texture2DShadowLerp( sampler2D depths, vec2 size, vec2 uv, float compare ) {\\n\\t\\tconst vec2 offset = vec2( 0.0, 1.0 );\\n\\t\\tvec2 texelSize = vec2( 1.0 ) / size;\\n\\t\\tvec2 centroidUV = floor( uv * size + 0.5 ) / size;\\n\\t\\tfloat lb = texture2DCompare( depths, centroidUV + texelSize * offset.xx, compare );\\n\\t\\tfloat lt = texture2DCompare( depths, centroidUV + texelSize * offset.xy, compare );\\n\\t\\tfloat rb = texture2DCompare( depths, centroidUV + texelSize * offset.yx, compare );\\n\\t\\tfloat rt = texture2DCompare( depths, centroidUV + texelSize * offset.yy, compare );\\n\\t\\tvec2 f = fract( uv * size + 0.5 );\\n\\t\\tfloat a = mix( lb, lt, f.y );\\n\\t\\tfloat b = mix( rb, rt, f.y );\\n\\t\\tfloat c = mix( a, b, f.x );\\n\\t\\treturn c;\\n\\t}\\n\\tfloat getShadow( sampler2D shadowMap, vec2 shadowMapSize, float shadowBias, float shadowRadius, vec4 shadowCoord ) {\\n\\t\\tfloat shadow = 1.0;\\n\\t\\tshadowCoord.xyz /= shadowCoord.w;\\n\\t\\tshadowCoord.z += shadowBias;\\n\\t\\tbvec4 inFrustumVec = bvec4 ( shadowCoord.x >= 0.0, shadowCoord.x <= 1.0, shadowCoord.y >= 0.0, shadowCoord.y <= 1.0 );\\n\\t\\tbool inFrustum = all( inFrustumVec );\\n\\t\\tbvec2 frustumTestVec = bvec2( inFrustum, shadowCoord.z <= 1.0 );\\n\\t\\tbool frustumTest = all( frustumTestVec );\\n\\t\\tif ( frustumTest ) {\\n\\t\\t#if defined( SHADOWMAP_TYPE_PCF )\\n\\t\\t\\tvec2 texelSize = vec2( 1.0 ) / shadowMapSize;\\n\\t\\t\\tfloat dx0 = - texelSize.x * shadowRadius;\\n\\t\\t\\tfloat dy0 = - texelSize.y * shadowRadius;\\n\\t\\t\\tfloat dx1 = + texelSize.x * shadowRadius;\\n\\t\\t\\tfloat dy1 = + texelSize.y * shadowRadius;\\n\\t\\t\\tshadow = (\\n\\t\\t\\t\\ttexture2DCompare( shadowMap, shadowCoord.xy + vec2( dx0, dy0 ), shadowCoord.z ) +\\n\\t\\t\\t\\ttexture2DCompare( shadowMap, shadowCoord.xy + vec2( 0.0, dy0 ), shadowCoord.z ) +\\n\\t\\t\\t\\ttexture2DCompare( shadowMap, shadowCoord.xy + vec2( dx1, dy0 ), shadowCoord.z ) +\\n\\t\\t\\t\\ttexture2DCompare( shadowMap, shadowCoord.xy + vec2( dx0, 0.0 ), shadowCoord.z ) +\\n\\t\\t\\t\\ttexture2DCompare( shadowMap, shadowCoord.xy, shadowCoord.z ) +\\n\\t\\t\\t\\ttexture2DCompare( shadowMap, shadowCoord.xy + vec2( dx1, 0.0 ), shadowCoord.z ) +\\n\\t\\t\\t\\ttexture2DCompare( shadowMap, shadowCoord.xy + vec2( dx0, dy1 ), shadowCoord.z ) +\\n\\t\\t\\t\\ttexture2DCompare( shadowMap, shadowCoord.xy + vec2( 0.0, dy1 ), shadowCoord.z ) +\\n\\t\\t\\t\\ttexture2DCompare( shadowMap, shadowCoord.xy + vec2( dx1, dy1 ), shadowCoord.z )\\n\\t\\t\\t) * ( 1.0 / 9.0 );\\n\\t\\t#elif defined( SHADOWMAP_TYPE_PCF_SOFT )\\n\\t\\t\\tvec2 texelSize = vec2( 1.0 ) / shadowMapSize;\\n\\t\\t\\tfloat dx0 = - texelSize.x * shadowRadius;\\n\\t\\t\\tfloat dy0 = - texelSize.y * shadowRadius;\\n\\t\\t\\tfloat dx1 = + texelSize.x * shadowRadius;\\n\\t\\t\\tfloat dy1 = + texelSize.y * shadowRadius;\\n\\t\\t\\tshadow = (\\n\\t\\t\\t\\ttexture2DShadowLerp( shadowMap, shadowMapSize, shadowCoord.xy + vec2( dx0, dy0 ), shadowCoord.z ) +\\n\\t\\t\\t\\ttexture2DShadowLerp( shadowMap, shadowMapSize, shadowCoord.xy + vec2( 0.0, dy0 ), shadowCoord.z ) +\\n\\t\\t\\t\\ttexture2DShadowLerp( shadowMap, shadowMapSize, shadowCoord.xy + vec2( dx1, dy0 ), shadowCoord.z ) +\\n\\t\\t\\t\\ttexture2DShadowLerp( shadowMap, shadowMapSize, shadowCoord.xy + vec2( dx0, 0.0 ), shadowCoord.z ) +\\n\\t\\t\\t\\ttexture2DShadowLerp( shadowMap, shadowMapSize, shadowCoord.xy, shadowCoord.z ) +\\n\\t\\t\\t\\ttexture2DShadowLerp( shadowMap, shadowMapSize, shadowCoord.xy + vec2( dx1, 0.0 ), shadowCoord.z ) +\\n\\t\\t\\t\\ttexture2DShadowLerp( shadowMap, shadowMapSize, shadowCoord.xy + vec2( dx0, dy1 ), shadowCoord.z ) +\\n\\t\\t\\t\\ttexture2DShadowLerp( shadowMap, shadowMapSize, shadowCoord.xy + vec2( 0.0, dy1 ), shadowCoord.z ) +\\n\\t\\t\\t\\ttexture2DShadowLerp( shadowMap, shadowMapSize, shadowCoord.xy + vec2( dx1, dy1 ), shadowCoord.z )\\n\\t\\t\\t) * ( 1.0 / 9.0 );\\n\\t\\t#else\\n\\t\\t\\tshadow = texture2DCompare( shadowMap, shadowCoord.xy, shadowCoord.z );\\n\\t\\t#endif\\n\\t\\t}\\n\\t\\treturn shadow;\\n\\t}\\n\\tvec2 cubeToUV( vec3 v, float texelSizeY ) {\\n\\t\\tvec3 absV = abs( v );\\n\\t\\tfloat scaleToCube = 1.0 / max( absV.x, max( absV.y, absV.z ) );\\n\\t\\tabsV *= scaleToCube;\\n\\t\\tv *= scaleToCube * ( 1.0 - 2.0 * texelSizeY );\\n\\t\\tvec2 planar = v.xy;\\n\\t\\tfloat almostATexel = 1.5 * texelSizeY;\\n\\t\\tfloat almostOne = 1.0 - almostATexel;\\n\\t\\tif ( absV.z >= almostOne ) {\\n\\t\\t\\tif ( v.z > 0.0 )\\n\\t\\t\\t\\tplanar.x = 4.0 - v.x;\\n\\t\\t} else if ( absV.x >= almostOne ) {\\n\\t\\t\\tfloat signX = sign( v.x );\\n\\t\\t\\tplanar.x = v.z * signX + 2.0 * signX;\\n\\t\\t} else if ( absV.y >= almostOne ) {\\n\\t\\t\\tfloat signY = sign( v.y );\\n\\t\\t\\tplanar.x = v.x + 2.0 * signY + 2.0;\\n\\t\\t\\tplanar.y = v.z * signY - 2.0;\\n\\t\\t}\\n\\t\\treturn vec2( 0.125, 0.25 ) * planar + vec2( 0.375, 0.75 );\\n\\t}\\n\\tfloat getPointShadow( sampler2D shadowMap, vec2 shadowMapSize, float shadowBias, float shadowRadius, vec4 shadowCoord ) {\\n\\t\\tvec2 texelSize = vec2( 1.0 ) / ( shadowMapSize * vec2( 4.0, 2.0 ) );\\n\\t\\tvec3 lightToPosition = shadowCoord.xyz;\\n\\t\\tvec3 bd3D = normalize( lightToPosition );\\n\\t\\tfloat dp = ( length( lightToPosition ) - shadowBias ) / 1000.0;\\n\\t\\t#if defined( SHADOWMAP_TYPE_PCF ) || defined( SHADOWMAP_TYPE_PCF_SOFT )\\n\\t\\t\\tvec2 offset = vec2( - 1, 1 ) * shadowRadius * texelSize.y;\\n\\t\\t\\treturn (\\n\\t\\t\\t\\ttexture2DCompare( shadowMap, cubeToUV( bd3D + offset.xyy, texelSize.y ), dp ) +\\n\\t\\t\\t\\ttexture2DCompare( shadowMap, cubeToUV( bd3D + offset.yyy, texelSize.y ), dp ) +\\n\\t\\t\\t\\ttexture2DCompare( shadowMap, cubeToUV( bd3D + offset.xyx, texelSize.y ), dp ) +\\n\\t\\t\\t\\ttexture2DCompare( shadowMap, cubeToUV( bd3D + offset.yyx, texelSize.y ), dp ) +\\n\\t\\t\\t\\ttexture2DCompare( shadowMap, cubeToUV( bd3D, texelSize.y ), dp ) +\\n\\t\\t\\t\\ttexture2DCompare( shadowMap, cubeToUV( bd3D + offset.xxy, texelSize.y ), dp ) +\\n\\t\\t\\t\\ttexture2DCompare( shadowMap, cubeToUV( bd3D + offset.yxy, texelSize.y ), dp ) +\\n\\t\\t\\t\\ttexture2DCompare( shadowMap, cubeToUV( bd3D + offset.xxx, texelSize.y ), dp ) +\\n\\t\\t\\t\\ttexture2DCompare( shadowMap, cubeToUV( bd3D + offset.yxx, texelSize.y ), dp )\\n\\t\\t\\t) * ( 1.0 / 9.0 );\\n\\t\\t#else\\n\\t\\t\\treturn texture2DCompare( shadowMap, cubeToUV( bd3D, texelSize.y ), dp );\\n\\t\\t#endif\\n\\t}\\n#endif\\n"
 },
-yat2: function(t, e, n) {
+PopChunksContent: function(t, e, n) {
     "use strict";
     n.d(e, "a",
     function() {
         return r
     });
-    var i = n("u0MW"),
+    // var i = n("u0MW"),
+    var o = function() {
+        function t() {}
+        return t.prototype.read = function(t, e) {
+            if (e <= 0) return [];
+            for (var n = [], i = 0; i < e; i++) n.push(t.readSwappedInt());
+            return n
+        },
+        t
+    } (),
+    s = function() {
+        function t() {}
+        return t.prototype.read = function(t, e) {
+            if (e <= 0) return [];
+            for (var n = [], i = 0; i < e; i++) n.push(t.readSwappedShort());
+            return n
+        },
+        t
+    } (),
+    u = function() {
+        function t() {}
+        return t.prototype.read = function(t, e) {
+            if (e <= 0) return [];
+            for (var n = [], i = 0; i < e; i++) n.push(t.readSwappedShort() + 32767);
+            return n
+        },
+        t
+    } (),
+    c = function() {
+        function t() {}
+        return t.prototype.read = function(t, e) {
+            if (e <= 0) return [];
+            var n = [],
+            i = t.readZigzag(),
+            r = t.readZigzag(),
+            a = t.readZigzag();
+            if (n.push(i, r, a), e % 3 != 0) throw new Error("Invalid VriantArray data ");
+            for (var o = 1; o < e / 3; o++) i += t.readZigzag(),
+            n.push(i),
+            r += t.readZigzag(),
+            n.push(r),
+            a += t.readZigzag(),
+            n.push(a);
+            return n
+        },
+        t
+    } (),
+    h = function() {
+        function t() {}
+        return t.prototype.read = function(t, e) {
+            if (e <= 0) return [];
+            var n = [],
+            i = t.readZigzag(),
+            r = t.readZigzag();
+            if (n.push(i, r), e % 2 != 0) throw new Error("Invalid TwoStepVriantArray data ");
+            for (var a = 1; a < e / 2; a++) i += t.readZigzag(),
+            n.push(i),
+            r += t.readZigzag(),
+            n.push(r);
+            return n
+        },
+        t
+    } (),
+    l = function() {
+        function t() {}
+        return t.prototype.read = function(e, n) {
+            if (n <= 0) return [];
+            for (var i = t.BITS,
+            a = new r.a(e), o = [], s = 0; s < n; s++) o.push(a.read(i));
+            for (var u = 0,
+            c = [], s = 0; s < n; s++) if (0 === o[s]) c.push(u);
+            else {
+                var h = a.read(o[s]),
+                l = 1 << o[s] - 1;
+                h < l && (h = -h - l),
+                h += u,
+                c.push(h),
+                u = h
+            }
+            return c
+        },
+        t.BITS = 5,
+        t
+    } (),
+    f = function() {
+        function t() {}
+        return t.prototype.read = function(e, n) {
+            if (n <= 0) return [];
+            for (var i = t.BITS,
+            a = t.STRIDE,
+            o = new r.a(e), s = [0, 0], u = [], c = 0; c < n / a; c++) u.push(o.read(i));
+            for (var h = [], c = 0; c < n / a; c++) {
+                var l = u[c];
+                if (0 === l) for (var f = 0; f < a; f++) h.push(s[f]);
+                else for (var f = 0; f < a; f++) {
+                    var p = o.read(l),
+                    d = 1 << l - 1;
+                    p = p - d + s[f],
+                    h.push(p),
+                    s[f] = p
+                }
+            }
+            return h
+        },
+        t.BITS = 5,
+        t.STRIDE = 2,
+        t
+    } (),
+    p = function() {
+        function t() {}
+        return t.prototype.read = function(e, n) {
+            if (n <= 0) return [];
+            for (var i = t.BITS,
+            a = t.STRIDE,
+            o = new r.a(e), s = [0, 0, 0], u = [], c = 0; c < n / a; c++) u.push(o.read(i));
+            for (var h = [], c = 0; c < n / a; c++) {
+                var l = u[c];
+                if (0 === l) for (var f = 0; f < a; f++) h.push(s[f]);
+                else for (var f = 0; f < a; f++) {
+                    var p = o.read(l),
+                    d = 1 << l - 1;
+                    p = p - d + s[f],
+                    h.push(p),
+                    s[f] = p
+                }
+            }
+            return h
+        },
+        t.BITS = 5,
+        t.STRIDE = 3,
+        t
+    } (),
+    d = {
+        0 : new o,
+        1 : new s,
+        2 : new u,
+        3 : new c,
+        4 : new h,
+        5 : new l,
+        6 : new f,
+        7 : new p
+    }
+
+    function inlineFunction(t) {
+        var e = t.readByte(),
+        n = t.readSwappedInt(),
+        i = t.readSwappedInt();
+        if (i < 0) throw new Error("Illegal data array length " + i);
+        if (0 === i) return [];
+        var r = t.readBytes(n),
+        o = r.length;
+        if (o < n) throw new Error("Not enough data!we need " + n + "bytes, but only read " + o + "bytes.type is " + e);
+        var s = new PopModelData(r),
+        u = d[e];
+        if (u) return u.read(s, i);
+        throw new Error("Illegal data array type ")
+    }
+
     r = function() {
         function t() {}
         return t.prototype.readFromStream = function(t) {
-            this.vertices = Object(i.a)(t),
-            this.normals = Object(i.a)(t),
-            this.textures = Object(i.a)(t),
-            this.indices = Object(i.a)(t)
+            this.vertices = inlineFunction(t),
+            this.normals = inlineFunction(t),
+            this.textures = inlineFunction(t),
+            this.indices = inlineFunction(t)
         },
         t
     } ()

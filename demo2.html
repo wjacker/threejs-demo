@@ -22,180 +22,631 @@
 			a {
 				color: #0af;
 			}
+			#panel {
+				position: absolute;
+				top: 0px; 
+				bottom: 0px;
+				right: 0px;
+				width: 200px;
+				padding: 5px;
+				background: white;
+				display: none;
+			}
+			#scene-panel {
+				position: absolute;
+				top: 0px; 
+				right: 0px;
+				width: 100px;
+				padding: 5px;
+				height: 100px;
+				background: white;
+				display: block;
+			}
+			.input-wrap {
+				clear: both;
+			}
+
+			.object-menu-warp {
+				position: fixed;
+				left: 0;
+				top: 0;
+				background: #323232;
+				border-radius: 20px 20px 20px 2px;
+				color: #fff;
+				display: none;
+			}
+			.object-menu .menu-item {
+				display: inline-block;
+				width: 34px;
+				height: 34px;
+				padding: 4px;
+				line-height: 34px;
+				position: relative;
+				cursor: pointer;
+				color: #fff;
+
+			}
+
+			.icon {
+			    display: inline-block;
+			    cursor: pointer;
+				color: #fff;
+			}
+
+			#container {
+				margin-left: 200px; 
+			}
+
+			#left-panel {
+				position: absolute;
+				top: 0px; 
+				bottom: 0px;
+				left: 0px;
+				width: 200px;
+				padding: 5px;
+				background: white;
+				display: block;
+			}
+			.left-panel .category_item {
+			}
+
 		</style>
 	</head>
 
 	<body>
-
+		<div id="left-panel">
+			<div class="category_list">
+				<div class="category_item"><img src="test.jpg" width="100" height="100" /></div>
+			</div>
+		</div>
 		<div id="container"></div>
+		<div class="object-menu-warp">
+			<div class="object-menu">
+				<div id="objDelete" class="menu-item delete">
+					<!-- <svg class="icon icon-delete"><use xlink:href="#delete"></use></svg> -->
+					删除
+				</div>
+			</div>
+		</div>
+		<div id="scene-panel">
+			<input id="exportScene" type="button" name="导出场景" value="导出场景"><br/><br/>
+			<input id="importScene" type="button" name="导入场景" value="导入场景"><br/><br/>
+			<input id="importObject" type="button" name="导入场景" value="导入对象"><br/><br/>
+		</div>
 
-		<div id="info">
-		<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> webgl - scene animation - <a href="https://clara.io/view/96106133-2e99-40cf-8abd-64defd153e61">Three Gears Scene</a> courtesy of David Sarno
-		<br><br>camera orbit/zoom/pan with left/middle/right mouse button</div>
+		
 
+		<div id="panel">
+			<div class="input-wrap">
+				长：<input id="obj_x" type="text" name="x"/> mm<br/>
+				宽：<input id="obj_y" type="text" name="y"/> mm<br/>
+				高：<input id="obj_z" type="text" name="z"/> mm<br/><br/>
+
+				<input id="applyBtn" type="button" name="应用" value="应用"><br/><br/>
+				<input id="exportObject" type="button" name="导出对象" value="导出对象"><br/><br/>
+
+				
+			</div>
+		</div>
+
+		<script src="jquery/jquery-3.3.1.min.js"></script>
 		<script src="js/three.js"></script>
 		<script src="js/controls/OrbitControls.js"></script>
 
-		<script src="js/controls/DragControls.js"></script>
-		<script src="js/controls/TransformControls.js"></script>
+		<script src="js/controls/NiceControls.js"></script>
+
+		<script src="js/loaders/FBXLoader.js"></script>
+		<script src="js/loaders/TDSLoader.js"></script>
+		<script src="js/loaders/DDSLoader.js"></script>
+		<script src="js/loaders/MTLLoader.js"></script>
+		<script src="js/loaders/OBJLoader.js"></script>
+		<script src="js/exporters/OBJExporter.js"></script>
+
 		<script src="js/Detector.js"></script>
-		<script src="js/stats.min.js"></script>
+		<script src="js/libs/stats.min.js"></script>
+
+		<script src="js/objects/Reflector.js"></script>
 
 		<script>
 			var scene, camera, controls, stats;
 			var renderer, mixer;
 			var clock = new THREE.Clock();
-			// var url = 'test2.json';
-			// var url = 'newscene.json';
-			var url = 'pop_mesh.json'
-			var SCREEN_WIDTH = window.innerWidth;
-			var SCREEN_HEIGHT = window.innerHeight;
+			var url = 'newscene.json';
+			var SCENE_WIDTH;
+			var SCENE_HEIGHT;
 			var container = document.getElementById( 'container' );
-			var dragControls;
 			var transformControls;
-			var dragObjects = [];
-			stats = new Stats();
-			container.appendChild( stats.dom );
-			renderer = new THREE.WebGLRenderer( { antialias: true } );
-			renderer.setPixelRatio( window.devicePixelRatio );
-			renderer.setSize( SCREEN_WIDTH, SCREEN_HEIGHT );
-			container.appendChild( renderer.domElement );
+			var orbitControls;
+			var worker;
 
-			raycaster = new THREE.Raycaster();//光线投射器
-			mouse = new THREE.Vector2();//二维向量 
-			document.addEventListener('mousemove', function(){
-			    event.preventDefault();
-			    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-			    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-			}, false);
+			var box = new THREE.Box3();
+
+			var _draggingObject = null;
+			var _dragging = false;
 
 
+			$(function() {
+				// stats = new Stats();
+				// container.appendChild( stats.dom );
+				SCENE_WIDTH = container.clientWidth;
+				SCENE_HEIGHT = window.innerHeight;
 
-			// Load a scene with objects, lights and camera from a JSON file
-			new THREE.ObjectLoader().load( url, function ( loadedScene ) {
-				scene = loadedScene;
-				scene.background = new THREE.Color( 0xffffff );
-				// If the loaded file contains a perspective camera, use it with adjusted aspect ratio...
-				scene.traverse( function ( sceneChild ) {
-					// if ( sceneChild.type === 'PerspectiveCamera' ) {
-					// 	camera = sceneChild;
-					// 	camera.aspect = SCREEN_WIDTH / SCREEN_HEIGHT;
-					// 	camera.updateProjectionMatrix();
-					// }
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( SCENE_WIDTH, SCENE_HEIGHT );
+				container.appendChild( renderer.domElement );
 
-					// if(sceneChild.uuid == "6F1DB837-B247-4C69-A54A-10824567A3CC"){
-					// 	var a = "123";
-					// }
-				} );
-				// ... else create a new camera and use it in the loaded scene
-				if ( camera === undefined ) {
-					camera = new THREE.PerspectiveCamera( 60, SCREEN_WIDTH / SCREEN_HEIGHT, 100, 1000000 );
-					camera.position.set( 0, -8500, 4000 );
-					//camera.rotation.set(1.3,0,0)
+				raycaster = new THREE.Raycaster();//光线投射器
+				mouse = new THREE.Vector2();//二维向量 
+				container.addEventListener('mousemove', function(){
+				    event.preventDefault();
+				    mouse.x = ((event.clientX - $(container).offset().left) / SCENE_WIDTH) * 2 - 1;
+				    mouse.y = -((event.clientY - $(container).offset().top) / SCENE_HEIGHT) * 2 + 1;
+
+				    if(_draggingObject) {
+				    	var object = _draggingObject;
+				    	scene.add(object);
+				    	_dragging = false;
+				    	_draggingObject = null;
+
+				    	box.setFromObject(object);
+						object.rotation.x = Math.PI / 2;
+						object.up.set(0, 0, 1);
+						object.traverse(function ( child ) {
+							child.userData.selectUUID = object.uuid;
+							if(child.type == "Mesh") {
+								child.geometry.translate(-(box.min.x + box.max.x)/2, -box.min.y, -(box.min.z + box.max.z)/2);
+							}
+						});
+
+						transformControls.setAddObject(object);
+				    }
+				    // console.log(" mouse.x: " + mouse.x + " mouse.y" + mouse.y);
+				}, false);
+
+
+				// scene size
+				// var WIDTH = window.innerWidth;
+				// var HEIGHT = window.innerHeight;
+
+
+				// Load a scene with objects, lights and camera from a JSON file
+				new THREE.ObjectLoader().load( url, function ( loadedScene ) {
+					scene = loadedScene;
+					scene.background = new THREE.Color( 0xffffff );
+					// If the loaded file contains a perspective camera, use it with adjusted aspect ratio...
+					scene.traverse( function ( sceneChild ) {
+
+					} );
+
+					if ( camera === undefined ) {
+						camera = new THREE.PerspectiveCamera( 60, SCENE_WIDTH / SCENE_HEIGHT, 100, 1000000 );
+						camera.position.set( 0, -8500, 4000 );
+						camera.up.set(0, 0, 1);
+					}
 					camera.lookAt(new THREE.Vector3(0,0,0));
+
+					// var loader = new THREE.FBXLoader();
+					// loader.load( 'models/nurbs.fbx', function( object ) {
+
+					// 	scene.add( object );
+
+					// } );
+
+					// var loader = new THREE.TextureLoader();
+					// var tex_wood = loader.load( 'models/tex_wood.jpg' );
+
+					// var loader = new THREE.TDSLoader( );
+					// loader.load( 'models/cabinet.3ds', function ( object ) {
+
+					// 	object.traverse( function ( child ) {
+					// 		if ( child instanceof THREE.Mesh ) {
+					// 			child.material.normalMap = tex_wood;
+					// 		}
+					// 	} );
+
+					// 	scene.add( object );
+
+					// });
+
+					loadOBJ("models/washingmachine/", "washingmachine", "washingmachine", {x: 1000, y: 300});
+					// loadOBJ("models/lamp/", "lamp", "lamp", {x: -1000, y: 300});
+					// loadOBJ("models/chair/", "chair", "chair", {x: 0, y: -1000});
+					// loadOBJ("models/table/", "table", "table", {x: 100, y: 0});
+					// loadOBJ("models/sofa/", "sofa1", "sofa1", {x: 200, y: 300});
+					// loadOBJ("models/sofa/", "sofa2", "sofa2", {x: 800, y: -600});
+
+					loadOBJ("models/", "table_sofa", "table_sofa");
+					loadOBJ("models/cabinet/", "cabinet", "cabinet", {x: 0, y:2200});
+					loadOBJ("models/television/", "television", "television", {x: 800, y:2200, z:1000});
+					
+					
+
+					loadOBJ("models/airconditioner/", "airconditioner", "airconditioner", {x: 1000, y: -200});
+					loadOBJ("models/airconditioner/", "airconditioner2", "airconditioner2", {x: 2000, y: -800});
+					
+					
+					addMirror(scene);
+
+
+					orbitControls = new THREE.OrbitControls( camera, container);
+					orbitControls.enableDamping = true;
+					orbitControls.dampingFactor = 0.8;
+					orbitControls.screenSpacePanning = false;
+					orbitControls.minDistance = 1000;
+					orbitControls.maxDistance = 50000;
+					// orbitControls.maxPolarAngle = Math.PI / 2;
+
+
+					orbitControls.addEventListener('change', function (event) {
+						// obj = scene.getObjectByName("front-wall");
+						// obj.visible = false;
+						updateWall();
+						requestAnimationFrame( render );
+				    });
+
+				    orbitControls.addEventListener('start', function (event) {
+						$('.object-menu-warp').hide();
+				    });
+
+					orbitControls.addEventListener('end', function (event) {
+						updateObjectInfo();
+				    });
+
+					render();
+					updateWall();
+					initTransformControls(camera, renderer, scene);
+				} );
+
+				function updateWall() {
+					var frontWall = scene.getObjectByName("front-wall");
+					box.setFromObject(frontWall);
+					if(box.min.y >= camera.position.y) {
+						frontWall.visible = false;
+					} else {
+						frontWall.visible = true;
+					}
+
+					var backWall = scene.getObjectByName("back-wall");
+					box.setFromObject(backWall);
+					if(box.max.y <= camera.position.y) {
+						backWall.visible = false;
+					} else {
+						backWall.visible = true;
+					}
+
+					var leftWall = scene.getObjectByName("left-wall");
+					box.setFromObject(leftWall);
+					if(box.min.x >= camera.position.x) {
+						leftWall.visible = false;
+					} else {
+						leftWall.visible = true;
+					}
+
+					var rightWall = scene.getObjectByName("right-wall");
+					box.setFromObject(rightWall);
+					if(box.max.x <= camera.position.x) {
+						rightWall.visible = false;
+					} else {
+						rightWall.visible = true;
+					}
 				}
-				controls = new THREE.OrbitControls( camera );
-				render();
-				initDragControls();
-			} );
 
-			function render() {
-				requestAnimationFrame( render );
-				renderer.render( scene, camera);
-			}
+				function addMirror(scene){
+					var geometry = new THREE.PlaneBufferGeometry( 1000, 1000 );
+					geometry.computeBoundingBox();
+					geometry.translate(0, 500, 0);
 
-			var projectiveObj;//定义上次投射到的对象
-			/**
-			 * 根据光投射器判断鼠标所在向量方向是否穿过物体
-			 * @param {*} raycaster 光投射器
-			 * @param {*} scene     场景
-			 * @param {*} camera    相机
-			 * @param {*} mouse     鼠标位置对应的二维向量
-			 */
-			function renderRaycasterObj(raycaster,scene,camera,mouse) {
-			    raycaster.setFromCamera(mouse, camera);
+					var verticalMirror = new THREE.Reflector( geometry, {
+						clipBias: 0.003,
+						textureWidth: SCENE_WIDTH * window.devicePixelRatio,
+						textureHeight: SCENE_HEIGHT * window.devicePixelRatio,
+						color: 0x889999,
+						recursion: 1
+					} );
+					verticalMirror.userData.selectUUID = verticalMirror.uuid;
+					verticalMirror.position.y = 2500;
+					verticalMirror.position.z = 1200;
+					verticalMirror.rotation.x = Math.PI / 2;
 
-			    var projectiveObjOld = projectiveObj;
-			    var intersects = raycaster.intersectObjects(scene.children, true);
-			    if (intersects.length > 0) {
-			        var currentProjectiveObjT = intersects[0].object.userData.parent;
-			        if (projectiveObj != currentProjectiveObjT) {
-			            if((currentProjectiveObjT instanceof THREE.AxisHelper) || (currentProjectiveObjT instanceof THREE.GridHelper)){
-			                //穿过的是坐标轴线和网格线
-			                return;
-			            }
-			            projectiveObj = intersects[0].object.userData.parent;
-			        }
-			    } else {
-			        projectiveObj = null;
-			    }
+					scene.add( verticalMirror );
+				}
 
-			    // if(projectiveObj) {
-			    // 	projectiveObj.material.color.set("#dd830d");
-			    // }
-			    // if(projectiveObjOld && projectiveObjOld != projectiveObj && projectiveObjOld.hasChecked != true) {
-			    // 	projectiveObjOld.material.color.set("gray");
-			    // } 
+				function loadOBJ(resourcePath, mtlName, objName, position, complete) {
+					var onProgress = function ( xhr ) {
+						if ( xhr.lengthComputable ) {
+							var percentComplete = xhr.loaded / xhr.total * 100;
+							console.log( Math.round( percentComplete, 2 ) + '% downloaded' );
+						}
+					};
+					var onError = function ( xhr ) { };
+					THREE.Loader.Handlers.add( /\.dds$/i, new THREE.DDSLoader() );
+					new THREE.MTLLoader()
+						.setPath( resourcePath )
+						.load( mtlName + '.mtl', function ( materials ) {
+							materials.preload();
+							new THREE.OBJLoader()
+								.setMaterials( materials )
+								.setPath( resourcePath )
+								.load( objName + '.obj', function ( object ) {
 
-			    if(projectiveObj) {
-			    	// projectiveObj.material.color.set("#dd830d");
-			    	transformControls.attach(projectiveObj);
-			    } else {
-			    	transformControls.detach();
-			    }
-			}
+									box.setFromObject(object);
+									if(complete != undefined) {
+										complete(object)
+									} else {
+										scene.add( object );
+										if(position !== undefined) {
+											if(position.x != undefined) {
+												object.position.x = position.x;
+											}
 
-			// 添加拖拽控件
-			function initDragControls() {
+											if(position.y != undefined) {
+												object.position.y = position.y;
+											}
 
-			    var objects = [];
-			    var rootNode, childRootNode;
-			    for (let i = 0; i < scene.children.length; i++) {
-			    	var rootNode = scene.children[i];
-			    	if(rootNode && (rootNode.type == "Object3D")) {
-			    		for (let j = 0; j < rootNode.children.length; j++) {
-				    		childRootNode = rootNode.children[j];
-				    		childRootNode.traverse( function ( child ) {
-								child.userData.parent = childRootNode;
-							} );
+											if(position.z != undefined) {
+												object.position.z = position.z;
+											}
+										}
+
+										object.rotation.x = Math.PI / 2;
+										object.up.set(0, 0, 1);
+										object.traverse(function ( child ) {
+											child.userData.selectUUID = object.uuid;
+											if(child.type == "Mesh") {
+												child.geometry.translate(-(box.min.x + box.max.x)/2, -box.min.y, -(box.min.z + box.max.z)/2);
+											}
+										});
+
+										
+										requestAnimationFrame(render);
+									}
+									
+
+								}, onProgress, onError );
+						} );
+				}
+
+				function render() {
+					// if(stats){
+					// 	stats.begin();
+					// }
+					renderer.render( scene, camera);
+
+					// if(stats){
+					// 	stats.end();
+					// }
+				}
+
+				var selectObject;//定义上次投射到的对象
+				/**
+				 * 根据光投射器判断鼠标所在向量方向是否穿过物体
+				 * @param {*} raycaster 光投射器
+				 * @param {*} scene     场景
+				 * @param {*} camera    相机
+				 * @param {*} mouse     鼠标位置对应的二维向量
+				 */
+				function renderRaycasterObj(raycaster,scene,camera,mouse) {
+				    raycaster.setFromCamera(mouse, camera);
+
+				    var intersects = raycaster.intersectObjects(scene.children, true);
+				    if (intersects.length > 0) {
+				    	var currentProjectiveObjT;
+				    	if(intersects[0].object.userData.selectUUID !== undefined) {
+				    		currentProjectiveObjT = scene.getObjectByProperty( "uuid", intersects[0].object.userData.selectUUID )
 				    	}
-			    	}
-			    }
+				    	
+				        if (selectObject != currentProjectiveObjT) {
+				            if((currentProjectiveObjT instanceof THREE.AxisHelper) || (currentProjectiveObjT instanceof THREE.GridHelper)){
+				                //穿过的是坐标轴线和网格线
+				                selectObject = null;
+				                return;
+				            }
+				            selectObject = currentProjectiveObjT;
+				        }
+				    } else {
+				        selectObject = null;
+				    }
+				    setSelectObject(selectObject);
+				}
 
-			    // 添加平移控件
-			    transformControls = new THREE.TransformControls(camera, renderer.domElement);
-			    // transformControls.addEventListener( 'change', render );
-			    scene.add(transformControls);
-			 
-			    // 过滤不是 Mesh 的物体,例如辅助网格对象
-			    // var objects = [];
-			    // for (let i = 0; i < scene.children.length; i++) {
-			    //     if (scene.children[i].isMesh) {
-			    //         objects.push(scene.children[i]);
-			    //     }
-			    // }
-			    // 初始化拖拽控件
-			    // dragControls = new THREE.DragControls(dragObjects, camera, renderer.domElement);
-			 
-			    // // 鼠标略过事件
-			    // // dragControls.addEventListener('hoveron', function (event) {
-			    // //     // 让变换控件对象和选中的对象绑定
-			    // //     transformControls.attach(event.object);
-			    // // });
-			    // // 开始拖拽
-			    // dragControls.addEventListener('dragstart', function (event) {
-			    //     controls.enabled = false;
-			    // });
-			    // // 拖拽结束
-			    // dragControls.addEventListener('dragend', function (event) {
-			    //     controls.enabled = true;
-			    // });
-			}
+				function setSelectObject(obj) {
+					selectObject = obj;
+					if(selectObject) {
+						transformControls.attach(selectObject);
+				    	$('#obj_x').val((transformControls.objectSize.x).toFixed(0));
+				    	$('#obj_y').val((transformControls.objectSize.y).toFixed(0));
+				    	$('#obj_z').val((transformControls.objectSize.z).toFixed(0));
+				    } else {
+				    	transformControls.detach();
+				    }
 
-			window.addEventListener( 'click', function(){
-                renderRaycasterObj(raycaster,scene,camera,mouse);
+				    updateObjectInfo();
+				    requestAnimationFrame( render );
+				}
 
-            }, false );
+				$('.category_item').on('touchstart', onPointerDown);
+
+				$('.category_item').on('mousedown', onPointerDown);
+
+				function onPointerDown( event ) {
+					event.preventDefault(); 
+
+					if ( _dragging === true || ( event.button !== undefined && event.button !== 0 ) ) return;
+
+					_dragging = true;
+
+					if(transformControls.addObject != undefined) {
+						scene.remove(transformControls.addObject);
+						transformControls.addObject = undefined;
+						requestAnimationFrame( render );
+						_dragging = false;
+						return;
+					}
+
+					loadOBJ("models/washingmachine/", "washingmachine", "washingmachine", {x: 1000, y: 300}, function(object) {
+						_draggingObject = object;
+						// scene.add( _draggingObject );
+					});
+
+				}
+
+				$('category_item img').on('dragstart', function(event) { 
+					event.preventDefault(); 
+
+				});
+
+				$('#applyBtn').click(function () {
+					if(selectObject) {
+						selectObject.scale.x = $('#obj_x').val()/transformControls.objectSize.x * selectObject.scale.x;
+						selectObject.scale.y = $('#obj_z').val()/transformControls.objectSize.z * selectObject.scale.y;
+						selectObject.scale.z = $('#obj_y').val()/transformControls.objectSize.y * selectObject.scale.z;
+						requestAnimationFrame( render );
+					}
+				});
+
+				$('#exportScene').click(function () {
+					var output = scene.toJSON();
+
+					try {
+
+						output = JSON.stringify( output, parseNumber, '\t' );
+						output = output.replace( /[\n\t]+([\d\.e\-\[\]]+)/g, '$1' );
+
+					} catch ( e ) {
+
+						output = JSON.stringify( output );
+
+					}
+
+					saveString( output, 'scene.json' );
+				});
+
+				$('#exportObject').click(function () {
+					if ( selectObject === null ) {
+						alert( '为选中导出对象' );
+						return;
+					}
+
+					var output = selectObject.toJSON();
+
+					try {
+
+						output = JSON.stringify( output, parseNumber, '\t' );
+						output = output.replace( /[\n\t]+([\d\.e\-\[\]]+)/g, '$1' );
+
+					} catch ( e ) {
+
+						output = JSON.stringify( output );
+
+					}
+
+					saveString( output, 'model.json' );
+				});
+
+				$('#objDelete').click(function () {
+					if ( selectObject === null ) {
+						return;
+					}
+
+					selectObject.parent.remove(selectObject);
+					setSelectObject(null);
+				});
+				
+
+				function saveString( text, filename ) {
+
+					save( new Blob( [ text ], { type: 'text/plain' } ), filename );
+
+				}
+
+
+				var link = document.createElement( 'a' );
+				link.style.display = 'none';
+				document.body.appendChild( link ); // Firefox workaround, see #6594
+
+				function save( blob, filename ) {
+
+					link.href = URL.createObjectURL( blob );
+					link.download = filename || 'data.json';
+					link.click();
+
+					// URL.revokeObjectURL( url ); breaks Firefox...
+
+				}
+
+				function toScreenPosition(object, camera) {
+				    var vector = new THREE.Vector3();
+				    var pos = new THREE.Vector3();
+					var canvas = renderer.domElement;
+
+					var box = new THREE.Box3();
+					box.setFromObject(object);
+
+					pos.copy(box.max);
+				    projScreenMat = new THREE.Matrix4();
+				    projScreenMat.multiply( camera.projectionMatrix, camera.matrixWorldInverse );
+				    projScreenMat.multiplyVector3( pos );
+
+				    return { x: ( pos.x + 1 ) * $(canvas).width() / 2 + $(canvas).offset().left,
+				         y: ( - pos.y + 1) * $(canvas).height() / 2 + $(canvas).offset().top };
+				};
+
+				function updateObjectInfo() {
+					if(selectObject) {
+						var point = toScreenPosition(selectObject, camera);
+				    	$('.object-menu-warp').css("transform", "translate(" + point.x + "px, " + point.y + "px) translate(0px, -100%)");
+						$('.object-menu-warp').show();
+						$('#panel').show();
+					} else {
+						$('.object-menu-warp').hide();
+						$('#panel').hide();
+					}
+				}
+
+				function initTransformControls (camera, renderer, scene){
+					transformControls = new THREE.NiceControls(camera, renderer.domElement, scene);
+					transformControls.setMoveRange(-4100, 3900, -1450, 2500, 0, 2800);
+
+					transformControls.addEventListener('dragStart', function (event) {
+						if(orbitControls != undefined) {
+							orbitControls.enabled = false;
+						}
+				    });
+
+					transformControls.addEventListener('dragEnd', function (event) {
+				        if(orbitControls != undefined) {
+							orbitControls.enabled = true;
+						}
+						updateObjectInfo();
+				    });
+
+				    // 拖拽结束
+				    transformControls.addEventListener('mouseDown', function (event) {
+				    	// renderRaycasterObj(raycaster,scene,camera,mouse);
+
+				        if(orbitControls != undefined) {
+							orbitControls.enabled = true;
+						}
+						$('.object-menu-warp').hide();
+				    });
+
+				    transformControls.addEventListener('change', function (event) {
+						requestAnimationFrame( render );
+				    });
+					scene.add(transformControls);
+				}
+
+				renderer.domElement.addEventListener( 'click', function(){
+	                renderRaycasterObj(raycaster,scene,camera,mouse);
+	            }, false );
+
+	            document.onselectstart = function() {
+				  return false;
+				}; 
+			});
+
+			
 
 			
 		</script>

@@ -711,6 +711,7 @@
 		this.attach = function ( object ) {
 
 			this.object = object;
+			THREEx.GeometryUtils.center(object.geometry);
 			this.visible = true;
 			this.update();
 

@@ -5764,7 +5764,7 @@
           {
             "uuid": "79233DA6-2AB6-416C-AB59-E8E8D3247CE7",
             "type": "Object3D",
-            "name": "back wall",
+            "name": "back-wall",
             "layers": 1,
             "matrix": [
               1,
@@ -5956,7 +5956,7 @@
           {
             "uuid": "B40F7DF0-9F15-4549-8FFD-4F47071C912D",
             "type": "Object3D",
-            "name": "right wall",
+            "name": "right-wall",
             "layers": 1,
             "matrix": [
               1,
@@ -6148,7 +6148,7 @@
           {
             "uuid": "3C7077EA-F1B1-4A5A-BF72-ACCF73E25268",
             "type": "Object3D",
-            "name": "front wall",
+            "name": "front-wall",
             "layers": 1,
             "matrix": [
               1,
@@ -6340,7 +6340,7 @@
           {
             "uuid": "4D486383-C742-4612-840E-7CC87F1A8DD2",
             "type": "Object3D",
-            "name": "left wall",
+            "name": "left-wall",
             "layers": 1,
             "matrix": [
               1,
@@ -6472,7 +6472,7 @@
                   {
                     "uuid": "BAB55400-C333-4BAD-AB39-E59738F0EF1D",
                     "type": "Mesh",
-                    "name": "right wall",
+                    "name": "left-wall",
                     "castShadow": true,
                     "receiveShadow": true,
                     "layers": 1,
