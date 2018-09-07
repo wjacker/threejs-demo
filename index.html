@@ -131,27 +131,23 @@
 
 		<script src="jquery/jquery-3.3.1.min.js"></script>
 		<script src="js/three.js"></script>
+
 		<script src="js/controls/OrbitControls.js"></script>
-
 		<script src="js/controls/NiceControls.js"></script>
-
-		<script src="js/loaders/FBXLoader.js"></script>
-		<script src="js/loaders/TDSLoader.js"></script>
-		<script src="js/loaders/DDSLoader.js"></script>
 		<script src="js/loaders/MTLLoader.js"></script>
 		<script src="js/loaders/OBJLoader.js"></script>
+		<script src="js/loaders/DDSLoader.js"></script>
 		<script src="js/exporters/OBJExporter.js"></script>
 
 		<script src="js/Detector.js"></script>
 		<script src="js/libs/stats.min.js"></script>
-
 		<script src="js/objects/Reflector.js"></script>
 
 		<script>
 			var scene, camera, controls, stats;
 			var renderer, mixer;
 			var clock = new THREE.Clock();
-			var url = 'newscene.json';
+			var url = 'scene.json';
 			var SCENE_WIDTH;
 			var SCENE_HEIGHT;
 			var container = document.getElementById( 'container' );
@@ -201,13 +197,7 @@
 
 						transformControls.setAddObject(object);
 				    }
-				    // console.log(" mouse.x: " + mouse.x + " mouse.y" + mouse.y);
 				}, false);
-
-
-				// scene size
-				// var WIDTH = window.innerWidth;
-				// var HEIGHT = window.innerHeight;
 
 
 				// Load a scene with objects, lights and camera from a JSON file
@@ -225,29 +215,6 @@
 						camera.up.set(0, 0, 1);
 					}
 					camera.lookAt(new THREE.Vector3(0,0,0));
-
-					// var loader = new THREE.FBXLoader();
-					// loader.load( 'models/nurbs.fbx', function( object ) {
-
-					// 	scene.add( object );
-
-					// } );
-
-					// var loader = new THREE.TextureLoader();
-					// var tex_wood = loader.load( 'models/tex_wood.jpg' );
-
-					// var loader = new THREE.TDSLoader( );
-					// loader.load( 'models/cabinet.3ds', function ( object ) {
-
-					// 	object.traverse( function ( child ) {
-					// 		if ( child instanceof THREE.Mesh ) {
-					// 			child.material.normalMap = tex_wood;
-					// 		}
-					// 	} );
-
-					// 	scene.add( object );
-
-					// });
 
 					loadOBJ("models/washingmachine/", "washingmachine", "washingmachine", {x: 1000, y: 300});
 					// loadOBJ("models/lamp/", "lamp", "lamp", {x: -1000, y: 300});
@@ -279,8 +246,6 @@
 
 
 					orbitControls.addEventListener('change', function (event) {
-						// obj = scene.getObjectByName("front-wall");
-						// obj.visible = false;
 						updateWall();
 						requestAnimationFrame( render );
 				    });
@@ -412,20 +377,12 @@
 					// 	stats.begin();
 					// }
 					renderer.render( scene, camera);
-
 					// if(stats){
 					// 	stats.end();
 					// }
 				}
 
 				var selectObject;//定义上次投射到的对象
-				/**
-				 * 根据光投射器判断鼠标所在向量方向是否穿过物体
-				 * @param {*} raycaster 光投射器
-				 * @param {*} scene     场景
-				 * @param {*} camera    相机
-				 * @param {*} mouse     鼠标位置对应的二维向量
-				 */
 				function renderRaycasterObj(raycaster,scene,camera,mouse) {
 				    raycaster.setFromCamera(mouse, camera);
 
@@ -466,9 +423,7 @@
 				}
 
 				$('.category_item').on('touchstart', onPointerDown);
-
 				$('.category_item').on('mousedown', onPointerDown);
-
 				function onPointerDown( event ) {
 					event.preventDefault(); 
 
@@ -509,14 +464,10 @@
 					var output = scene.toJSON();
 
 					try {
-
 						output = JSON.stringify( output, parseNumber, '\t' );
 						output = output.replace( /[\n\t]+([\d\.e\-\[\]]+)/g, '$1' );
-
 					} catch ( e ) {
-
 						output = JSON.stringify( output );
-
 					}
 
 					saveString( output, 'scene.json' );
@@ -531,14 +482,10 @@
 					var output = selectObject.toJSON();
 
 					try {
-
 						output = JSON.stringify( output, parseNumber, '\t' );
 						output = output.replace( /[\n\t]+([\d\.e\-\[\]]+)/g, '$1' );
-
 					} catch ( e ) {
-
 						output = JSON.stringify( output );
-
 					}
 
 					saveString( output, 'model.json' );
@@ -552,14 +499,12 @@
 					selectObject.parent.remove(selectObject);
 					setSelectObject(null);
 				});
-				
 
 				function saveString( text, filename ) {
 
 					save( new Blob( [ text ], { type: 'text/plain' } ), filename );
 
 				}
-
 
 				var link = document.createElement( 'a' );
 				link.style.display = 'none';
@@ -570,9 +515,7 @@
 					link.href = URL.createObjectURL( blob );
 					link.download = filename || 'data.json';
 					link.click();
-
 					// URL.revokeObjectURL( url ); breaks Firefox...
-
 				}
 
 				function toScreenPosition(object, camera) {
@@ -623,8 +566,6 @@
 
 				    // 拖拽结束
 				    transformControls.addEventListener('mouseDown', function (event) {
-				    	// renderRaycasterObj(raycaster,scene,camera,mouse);
-
 				        if(orbitControls != undefined) {
 							orbitControls.enabled = true;
 						}
@@ -645,9 +586,6 @@
 				  return false;
 				}; 
 			});
-
-			
-
 			
 		</script>
 
