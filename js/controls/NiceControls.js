@@ -475,6 +475,7 @@
 
 		var changeEvent = { type: "change" };
 		var mouseDownEvent = { type: "mouseDown" };
+		var mouseDownOnControlEvent = { type: "mouseDownOnControl" };
 		var objectChangeEvent = { type: "objectChange" };
 		var mouseUpEvent = { type: "mouseUp"};
 
@@ -695,9 +696,13 @@
 		this.calculatePosition = function() {
 
 			if(this.moveRange != undefined){
-				scope.object.position.x = Math.max(this.moveRange.minX + this.boxSize.x / 2, Math.min(this.moveRange.maxX - this.boxSize.x / 2, scope.object.position.x));
-				scope.object.position.y = Math.max(this.moveRange.minY + this.boxSize.y / 2, Math.min(this.moveRange.maxY - this.boxSize.y / 2, scope.object.position.y));
-				scope.object.position.z = Math.max(this.moveRange.minZ, Math.min(this.moveRange.maxZ - this.boxSize.z, scope.object.position.z));
+
+				if(scope.axis == "XY") {
+					scope.object.position.x = Math.max(this.moveRange.minX + this.boxSize.x / 2, Math.min(this.moveRange.maxX - this.boxSize.x / 2, scope.object.position.x));
+					scope.object.position.y = Math.max(this.moveRange.minY + this.boxSize.y / 2, Math.min(this.moveRange.maxY - this.boxSize.y / 2, scope.object.position.y));
+				} else if(scope.axis == "Z") {
+					scope.object.position.z = Math.max(this.moveRange.minZ, Math.min(this.moveRange.maxZ - this.boxSize.z, scope.object.position.z));
+				}
 			}
 
 			return false;
@@ -720,9 +725,7 @@
 			// 	eye.copy( camPosition ).sub( worldPosition ).normalize();
 			// }
 
-			if(scope.axis == "XY" || scope.axis == "Z") {
-				this.calculatePosition();
-			}
+			this.calculatePosition();
 			
 			
 			scope.position.x = scope.object.position.x;
@@ -786,6 +789,7 @@
 				scope.attach(scope.addObject);
 				scope.addObject = undefined;
 				scope.dispatchEvent( changeEvent );
+				scope.dispatchEvent( mouseDownOnControlEvent );
 				return;
 			}
 
@@ -805,7 +809,7 @@
 
 					scope.axis = intersect.object.groupName;
 
-					scope.dispatchEvent( mouseDownEvent );
+					scope.dispatchEvent( mouseDownOnControlEvent );
 
 					scope.update();
 
@@ -816,7 +820,7 @@
 					if(scope.axis == "Z") {
 						plane = new THREE.Plane(new THREE.Vector3(1, 1, 0), 0);
 					} else {
-						plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+						plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), -scope.object.position.z);
 					}
 					
 					var planeIntersect = intersectPlane( pointer, plane);
@@ -838,6 +842,7 @@
 					}
 
 					scope.dispatchEvent( dragStartEvent );
+					_dragging = true;
 
 				} else {
 					var intersect = intersectObjects( pointer, [scope.object] );
@@ -845,7 +850,7 @@
 						event.preventDefault();
 						event.stopPropagation();
 						scope.axis = "XY";
-						scope.dispatchEvent( mouseDownEvent );
+						scope.dispatchEvent( mouseDownOnControlEvent );
 						scope.update();
 
 						eye.copy( camPosition ).sub( worldPosition ).normalize();
@@ -871,12 +876,16 @@
 
 						}
 						scope.dispatchEvent( dragStartEvent );
+						_dragging = true;
+					} else {
+						_dragging = false;
+						// scope.dispatchEvent( mouseDownEvent );
 					}
 				}
 
 			}
 
-			_dragging = true;
+			
 
 		}
 
@@ -929,7 +938,7 @@
 				object.position.copy( oldPosition );
 				object.position.add( point );
 			} else if ( scope.axis === "R" ) {
-				plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+				plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), -oldPosition.z);
 				mouse.x = ((event.clientX - domOffset.left)/ clientWidth) * 2 - 1;
 				mouse.y = -((event.clientY - domOffset.top) / clientHeight) * 2 + 1;
 				// mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
@@ -962,6 +971,8 @@
 				scope.attach(scope.addObject);
 				scope.addObject = undefined;
 				scope.dispatchEvent( changeEvent );
+				scope.dispatchEvent( mouseUpEvent );
+				scope.dispatchEvent( dragEndEvent );
 				return;
 			}
 

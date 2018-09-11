@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>three.js webgl - scene animation</title>
+		<title>three.js demo</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 		<style>
@@ -109,7 +109,8 @@
 			</div>
 		</div>
 		<div id="scene-panel">
-			<input id="exportScene" type="button" name="导出场景" value="导出场景"><br/><br/>
+			<input id="cleanScene" type="button" name="清空场景" value="清空场景"><br/><br/>
+			<input id="saveScene" type="button" name="保存场景" value="保存场景"><br/><br/>
 			<input id="importScene" type="button" name="导入场景" value="导入场景"><br/><br/>
 			<input id="importObject" type="button" name="导入场景" value="导入对象"><br/><br/>
 		</div>
@@ -131,6 +132,7 @@
 
 		<script src="jquery/jquery-3.3.1.min.js"></script>
 		<script src="js/three.js"></script>
+		<script src="js/Loader.js"></script>
 
 		<script src="js/controls/OrbitControls.js"></script>
 		<script src="js/controls/NiceControls.js"></script>
@@ -154,11 +156,16 @@
 			var transformControls;
 			var orbitControls;
 			var worker;
+			var sceneObjectIds = [];
 
 			var box = new THREE.Box3();
 
 			var _draggingObject = null;
 			var _dragging = false;
+
+			var _enableRaycaster = true;
+			// var selectObject;
+			var loader
 
 
 			$(function() {
@@ -172,6 +179,56 @@
 				renderer.setSize( SCENE_WIDTH, SCENE_HEIGHT );
 				container.appendChild( renderer.domElement );
 
+				//文件导入
+				var form = document.createElement( 'form' );
+				form.style.display = 'none';
+				document.body.appendChild( form );
+
+				var fileInput = document.createElement( 'input' );
+				fileInput.type = 'file';
+				fileInput.addEventListener( 'change', function ( event ) {
+					var file = fileInput.files[ 0 ];
+
+					var filename = file.name;
+					var extension = filename.split( '.' ).pop().toLowerCase();
+
+					var reader = new FileReader();
+					reader.addEventListener( 'progress', function ( event ) {
+
+						var size = '(' + Math.floor( event.total / 1000 ) + ' KB)';
+						var progress = Math.floor( ( event.loaded / event.total ) * 100 ) + '%';
+						console.log( 'Loading', filename, size, progress );
+
+					} );
+
+					reader.addEventListener( 'load', function ( event ) {
+						var contents = event.target.result;
+
+						var data;
+
+						try {
+
+							data = JSON.parse( contents );
+
+						} catch ( error ) {
+
+							alert( error );
+							return;
+
+						}
+
+						parseScene( data, file, filename );
+
+					}, false );
+					reader.readAsText( file );
+
+					form.reset();
+
+				} );
+				form.appendChild( fileInput );
+
+
+
 				raycaster = new THREE.Raycaster();//光线投射器
 				mouse = new THREE.Vector2();//二维向量 
 				container.addEventListener('mousemove', function(){
@@ -182,6 +239,7 @@
 				    if(_draggingObject) {
 				    	var object = _draggingObject;
 				    	scene.add(object);
+				    	sceneObjectIds.push(object.uuid);
 				    	_dragging = false;
 				    	_draggingObject = null;
 
@@ -199,15 +257,22 @@
 				    }
 				}, false);
 
+				function loadScene(url, complete){
+					new THREE.ObjectLoader().load( url, function(loadedScene){
+						complete(loadedScene);
+					});
+				}
 
 				// Load a scene with objects, lights and camera from a JSON file
-				new THREE.ObjectLoader().load( url, function ( loadedScene ) {
+				loadScene(url, function ( loadedScene ) {
 					scene = loadedScene;
 					scene.background = new THREE.Color( 0xffffff );
 					// If the loaded file contains a perspective camera, use it with adjusted aspect ratio...
 					scene.traverse( function ( sceneChild ) {
 
 					} );
+
+					sceneObjectIds = [];
 
 					if ( camera === undefined ) {
 						camera = new THREE.PerspectiveCamera( 60, SCENE_WIDTH / SCENE_HEIGHT, 100, 1000000 );
@@ -216,21 +281,30 @@
 					}
 					camera.lookAt(new THREE.Vector3(0,0,0));
 
-					loadOBJ("models/washingmachine/", "washingmachine", "washingmachine", {x: 1000, y: 300});
+					loadOBJ("models/washingmachine/washingmachine.mtl", 
+						"models/washingmachine/washingmachine.obj", 
+						{p: {x: 1000, y: 300}});
 					// loadOBJ("models/lamp/", "lamp", "lamp", {x: -1000, y: 300});
 					// loadOBJ("models/chair/", "chair", "chair", {x: 0, y: -1000});
 					// loadOBJ("models/table/", "table", "table", {x: 100, y: 0});
 					// loadOBJ("models/sofa/", "sofa1", "sofa1", {x: 200, y: 300});
 					// loadOBJ("models/sofa/", "sofa2", "sofa2", {x: 800, y: -600});
 
-					loadOBJ("models/", "table_sofa", "table_sofa");
-					loadOBJ("models/cabinet/", "cabinet", "cabinet", {x: 0, y:2200});
-					loadOBJ("models/television/", "television", "television", {x: 800, y:2200, z:1000});
-					
-					
+					loadOBJ("models/table_sofa.mtl", 
+						"models/table_sofa.obj");
+					loadOBJ("models/cabinet/cabinet.mtl", 
+						"models/cabinet/cabinet.obj", 
+						{p: {x: 0, y:2200}});
+					loadOBJ("models/television/television.mtl", 
+						"models/television/television.obj", 
+						{p: {x: 800, y:2200, z:1000}});
 
-					loadOBJ("models/airconditioner/", "airconditioner", "airconditioner", {x: 1000, y: -200});
-					loadOBJ("models/airconditioner/", "airconditioner2", "airconditioner2", {x: 2000, y: -800});
+					loadOBJ("models/airconditioner/airconditioner.mtl", 
+						"models/airconditioner/airconditioner.obj", 
+						{p: {x: 1000, y: -200}});
+					loadOBJ("models/airconditioner/airconditioner2.mtl", 
+						"models/airconditioner/airconditioner2.obj", 
+						{p: {x: 2000, y: -800}});
 					
 					
 					addMirror(scene);
@@ -252,6 +326,10 @@
 
 				    orbitControls.addEventListener('start', function (event) {
 						$('.object-menu-warp').hide();
+				    });
+
+				    orbitControls.addEventListener('rotate', function (event) {
+						_enableRaycaster = false;
 				    });
 
 					orbitControls.addEventListener('end', function (event) {
@@ -317,42 +395,42 @@
 					scene.add( verticalMirror );
 				}
 
-				function loadOBJ(resourcePath, mtlName, objName, position, complete) {
+				function loadOBJ(mtlPath, objPath, transfrom, complete) {
 					var onProgress = function ( xhr ) {
 						if ( xhr.lengthComputable ) {
 							var percentComplete = xhr.loaded / xhr.total * 100;
 							console.log( Math.round( percentComplete, 2 ) + '% downloaded' );
 						}
 					};
+					var pathArray = mtlPath.split('/');
+					var mtlName = pathArray[pathArray.length - 1];
+					pathArray = mtlPath.split('/' + mtlName);
+					var mtlResourcePath = pathArray[0] + "/";
+
+					pathArray = objPath.split('/');
+					var objName = pathArray[pathArray.length - 1];
+					pathArray = objPath.split('/' + objName);
+					var objResourcePath = pathArray[0] + "/";
+
 					var onError = function ( xhr ) { };
 					THREE.Loader.Handlers.add( /\.dds$/i, new THREE.DDSLoader() );
 					new THREE.MTLLoader()
-						.setPath( resourcePath )
-						.load( mtlName + '.mtl', function ( materials ) {
+						.setPath( mtlResourcePath )
+						.load( mtlName, function ( materials ) {
 							materials.preload();
 							new THREE.OBJLoader()
 								.setMaterials( materials )
-								.setPath( resourcePath )
-								.load( objName + '.obj', function ( object ) {
-
+								.setPath( objResourcePath )
+								.load( objName, function ( object ) {
+									object.loader = "OBJLoader";
+									object.path1 = objPath;
+									object.path2 = mtlPath;
 									box.setFromObject(object);
 									if(complete != undefined) {
 										complete(object)
 									} else {
 										scene.add( object );
-										if(position !== undefined) {
-											if(position.x != undefined) {
-												object.position.x = position.x;
-											}
-
-											if(position.y != undefined) {
-												object.position.y = position.y;
-											}
-
-											if(position.z != undefined) {
-												object.position.z = position.z;
-											}
-										}
+										sceneObjectIds.push(object.uuid);
 
 										object.rotation.x = Math.PI / 2;
 										object.up.set(0, 0, 1);
@@ -363,6 +441,45 @@
 											}
 										});
 
+										if(transfrom && transfrom != undefined) {
+											var position = transfrom.p;
+											if(position !== undefined) {
+												if(position.x != undefined) {
+													object.position.x = position.x;
+												}
+												if(position.y != undefined) {
+													object.position.y = position.y;
+												}
+												if(position.z != undefined) {
+													object.position.z = position.z;
+												}
+											}
+
+											var rotation = transfrom.r;
+											if(rotation !== undefined) {
+												if(rotation._x != undefined) {
+													object.rotation.x = rotation._x;
+												}
+												if(rotation._y != undefined) {
+													object.rotation.y = rotation._y;
+												}
+												if(rotation._z != undefined) {
+													object.rotation.z = rotation._z;
+												}
+											}
+											var scale = transfrom.s;
+											if(scale !== undefined) {
+												if(scale.x != undefined) {
+													object.scale.x = scale.x;
+												}
+												if(rotation._y != undefined) {
+													object.scale.y = scale.y;
+												}
+												if(rotation._z != undefined) {
+													object.scale.z = scale.z;
+												}
+											}
+										}
 										
 										requestAnimationFrame(render);
 									}
@@ -382,10 +499,10 @@
 					// }
 				}
 
-				var selectObject;//定义上次投射到的对象
+				//定义上次投射到的对象
 				function renderRaycasterObj(raycaster,scene,camera,mouse) {
 				    raycaster.setFromCamera(mouse, camera);
-
+				   	var currentSelectObject = transformControls.object;
 				    var intersects = raycaster.intersectObjects(scene.children, true);
 				    if (intersects.length > 0) {
 				    	var currentProjectiveObjT;
@@ -393,24 +510,27 @@
 				    		currentProjectiveObjT = scene.getObjectByProperty( "uuid", intersects[0].object.userData.selectUUID )
 				    	}
 				    	
-				        if (selectObject != currentProjectiveObjT) {
+				        if (currentSelectObject != currentProjectiveObjT) {
 				            if((currentProjectiveObjT instanceof THREE.AxisHelper) || (currentProjectiveObjT instanceof THREE.GridHelper)){
 				                //穿过的是坐标轴线和网格线
-				                selectObject = null;
+				                currentSelectObject = null;
 				                return;
 				            }
-				            selectObject = currentProjectiveObjT;
+				            currentSelectObject = currentProjectiveObjT;
 				        }
 				    } else {
-				        selectObject = null;
+				        currentSelectObject = null;
 				    }
-				    setSelectObject(selectObject);
+				    setSelectObject(currentSelectObject);
 				}
 
 				function setSelectObject(obj) {
-					selectObject = obj;
-					if(selectObject) {
-						transformControls.attach(selectObject);
+					if(transformControls.object === obj) {
+						return;
+					}
+					// selectObject = obj;
+					if(obj) {
+						transformControls.attach(obj);
 				    	$('#obj_x').val((transformControls.objectSize.x).toFixed(0));
 				    	$('#obj_y').val((transformControls.objectSize.y).toFixed(0));
 				    	$('#obj_z').val((transformControls.objectSize.z).toFixed(0));
@@ -433,13 +553,15 @@
 
 					if(transformControls.addObject != undefined) {
 						scene.remove(transformControls.addObject);
+						removeObjectFromArray(sceneObjectIds, transformControls.addObject.uuid);
 						transformControls.addObject = undefined;
 						requestAnimationFrame( render );
 						_dragging = false;
 						return;
 					}
 
-					loadOBJ("models/washingmachine/", "washingmachine", "washingmachine", {x: 1000, y: 300}, function(object) {
+					loadOBJ("models/washingmachine/washingmachine.mtl", 
+						"models/washingmachine/washingmachine.obj", null, function(object) {
 						_draggingObject = object;
 						// scene.add( _draggingObject );
 					});
@@ -452,6 +574,7 @@
 				});
 
 				$('#applyBtn').click(function () {
+					var selectObject = transformControls.object;
 					if(selectObject) {
 						selectObject.scale.x = $('#obj_x').val()/transformControls.objectSize.x * selectObject.scale.x;
 						selectObject.scale.y = $('#obj_z').val()/transformControls.objectSize.z * selectObject.scale.y;
@@ -460,11 +583,45 @@
 					}
 				});
 
-				$('#exportScene').click(function () {
-					var output = scene.toJSON();
+				$('#saveScene').click(function () {
+					var output = {};// = scene.toJSON();
 
 					try {
-						output = JSON.stringify( output, parseNumber, '\t' );
+						output.scene = {"sceneId": 1, "sceneName":"abc", "scenePath":"scene.json"};
+
+						sceneObjects = [];
+
+						var obj;
+						var objDic;
+						var uuid;
+						for ( var i = 0, l = sceneObjectIds.length; i < l; i ++ ) {
+							uuid = sceneObjectIds[i];
+							if(uuid != undefined) {
+								obj = scene.getObjectByProperty("uuid", sceneObjectIds[i]);
+								if(obj != undefined) {
+									objDic = {};
+									objDic.t = {};
+									objDic.t.p = obj.position;
+									objDic.t.r = obj.rotation;
+									objDic.t.s = obj.scale;
+
+									if (obj.loader != undefined) {
+										objDic.loader = obj.loader;
+										objDic.path1 = obj.path1;
+										objDic.path2 = obj.path2;
+									}
+
+									if(obj.searchParam != undefined) {
+										objDic.searchParam = obj.searchParam;
+									}
+									sceneObjects.push(objDic);
+								}
+							}
+						}
+						output.scene.objects = sceneObjects;
+
+
+						output = JSON.stringify( output );
 						output = output.replace( /[\n\t]+([\d\.e\-\[\]]+)/g, '$1' );
 					} catch ( e ) {
 						output = JSON.stringify( output );
@@ -473,30 +630,76 @@
 					saveString( output, 'scene.json' );
 				});
 
-				$('#exportObject').click(function () {
-					if ( selectObject === null ) {
-						alert( '为选中导出对象' );
-						return;
-					}
+				$('#importScene').click(function() {
+					fileInput.click();
 
-					var output = selectObject.toJSON();
-
-					try {
-						output = JSON.stringify( output, parseNumber, '\t' );
-						output = output.replace( /[\n\t]+([\d\.e\-\[\]]+)/g, '$1' );
-					} catch ( e ) {
-						output = JSON.stringify( output );
-					}
-
-					saveString( output, 'model.json' );
 				});
 
+				$('#cleanScene').click(function() {
+					cleanScene();
+					requestAnimationFrame( render );
+				});
+
+				function cleanScene() {
+					// while(scene.children.length > 0){ 
+					//     scene.remove(scene.children[0]); 
+					// }
+
+					for ( var i = 0, l = sceneObjectIds.length; i < l; i ++ ) {
+						uuid = sceneObjectIds[i];
+						if(uuid != undefined) {
+							obj = scene.getObjectByProperty("uuid", sceneObjectIds[i]);
+							if(obj != undefined) {
+								scene.remove(obj);
+							}
+						}
+					}
+				}
+
+				function parseScene(data, file, filename) {
+					console.log(data);
+					if(data && data.scene != undefined && data.scene.scenePath != undefined) {
+						cleanScene();
+
+						loadScene(data.scene.scenePath, function ( loadedScene ) {
+							// scene = loadedScene;
+							// scene.background = new THREE.Color( 0xffffff );
+
+							sceneObjectIds = [];
+
+							if ( camera === undefined ) {
+								camera = new THREE.PerspectiveCamera( 60, SCENE_WIDTH / SCENE_HEIGHT, 100, 1000000 );
+							}
+							//reset camera posision
+							camera.position.set( 0, -8500, 4000 );
+							camera.up.set(0, 0, 1);
+							camera.lookAt(new THREE.Vector3(0,0,0));
+
+							var obj;
+							for (var i = 0; i < data.scene.objects.length; i++) {
+								obj = data.scene.objects[i];
+
+								if(obj.loader == "OBJLoader") {
+									loadOBJ(obj.path2, 
+										obj.path1, obj.t);
+								}
+							}
+							updateWall();
+							requestAnimationFrame( render );
+						});
+
+					}
+				}
+
 				$('#objDelete').click(function () {
+					var selectObject = transformControls.object;
 					if ( selectObject === null ) {
 						return;
 					}
 
 					selectObject.parent.remove(selectObject);
+					removeObjectFromArray(sceneObjectIds, selectObject.uuid);
+
 					setSelectObject(null);
 				});
 
@@ -536,8 +739,8 @@
 				};
 
 				function updateObjectInfo() {
-					if(selectObject) {
-						var point = toScreenPosition(selectObject, camera);
+					if(transformControls.object) {
+						var point = toScreenPosition(transformControls.object, camera);
 				    	$('.object-menu-warp').css("transform", "translate(" + point.x + "px, " + point.y + "px) translate(0px, -100%)");
 						$('.object-menu-warp').show();
 						$('#panel').show();
@@ -555,22 +758,25 @@
 						if(orbitControls != undefined) {
 							orbitControls.enabled = false;
 						}
+						_enableRaycaster = false;
 				    });
 
 					transformControls.addEventListener('dragEnd', function (event) {
 				        if(orbitControls != undefined) {
 							orbitControls.enabled = true;
 						}
+						// _enableRaycaster = true;
 						updateObjectInfo();
 				    });
 
-				    // 拖拽结束
-				    transformControls.addEventListener('mouseDown', function (event) {
-				        if(orbitControls != undefined) {
-							orbitControls.enabled = true;
-						}
+				    transformControls.addEventListener('mouseDownOnControl', function (event) {
+				    	_enableRaycaster = false;
 						$('.object-menu-warp').hide();
 				    });
+
+				    // transformControls.addEventListener('mouseUp', function (event) {
+				    // 	_enableRaycaster = true;
+				    // });
 
 				    transformControls.addEventListener('change', function (event) {
 						requestAnimationFrame( render );
@@ -579,14 +785,31 @@
 				}
 
 				renderer.domElement.addEventListener( 'click', function(){
+					if(!_enableRaycaster) {
+						_enableRaycaster = true;
+						return;
+					}
 	                renderRaycasterObj(raycaster,scene,camera,mouse);
 	            }, false );
+
+	            function removeObjectFromArray(array, object) {
+	            	var index = array.indexOf(object);
+					if(index !== -1) {
+						array.remove(index);
+					}
+	            }
 
 	            document.onselectstart = function() {
 				  return false;
 				}; 
 			});
 			
+			// Array Remove - By John Resig (MIT Licensed)
+			Array.prototype.remove = function(from, to) {
+			  var rest = this.slice((to || from) + 1 || this.length);
+			  this.length = from < 0 ? this.length + from : from;
+			  return this.push.apply(this, rest);
+			};
 		</script>
 
 	</body>

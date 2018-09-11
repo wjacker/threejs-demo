@@ -249,6 +249,7 @@ THREE.OrbitControls = function ( object, domElement ) {
 	var changeEvent = { type: 'change' };
 	var startEvent = { type: 'start' };
 	var endEvent = { type: 'end' };
+	var rotateEvent = { type: 'rotate' };
 
 	var STATE = { NONE: - 1, ROTATE: 0, DOLLY: 1, PAN: 2, TOUCH_ROTATE: 3, TOUCH_DOLLY_PAN: 4 };
 
@@ -466,6 +467,8 @@ THREE.OrbitControls = function ( object, domElement ) {
 		rotateUp( 2 * Math.PI * rotateDelta.y / element.clientHeight );
 
 		rotateStart.copy( rotateEnd );
+
+		scope.dispatchEvent( rotateEvent );
 
 		scope.update();
 
