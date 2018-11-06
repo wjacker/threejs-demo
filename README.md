@@ -4,7 +4,7 @@
 项目是以Eclipse作为集成开发环境，采用Maven作为项目构建工具，由以下几个子项目构成：
 
 ## Demo地址：<br />
-[Nice 3D Demo][http://nice3d.dev.cosmoplat.com]
+[http://nice3d.dev.cosmoplat.com]
 
 
 ## 主要功能<br />
