@@ -37,8 +37,7 @@
 				top: 0px; 
 				right: 0px;
 				width: 100px;
-				padding: 5px;
-				height: 100px;
+				padding: 20px;
 				background: white;
 				display: block;
 			}
@@ -112,7 +111,7 @@
 			<input id="cleanScene" type="button" name="清空场景" value="清空场景"><br/><br/>
 			<input id="saveScene" type="button" name="保存场景" value="保存场景"><br/><br/>
 			<input id="importScene" type="button" name="导入场景" value="导入场景"><br/><br/>
-			<input id="importObject" type="button" name="导入场景" value="导入对象"><br/><br/>
+			<!-- <input id="importObject" type="button" name="导入场景" value="导入对象"><br/><br/> -->
 		</div>
 
 		
@@ -124,7 +123,7 @@
 				高：<input id="obj_z" type="text" name="z"/> mm<br/><br/>
 
 				<input id="applyBtn" type="button" name="应用" value="应用"><br/><br/>
-				<input id="exportObject" type="button" name="导出对象" value="导出对象"><br/><br/>
+				<!-- <input id="exportObject" type="button" name="导出对象" value="导出对象"><br/><br/> -->
 
 				
 			</div>
@@ -132,10 +131,10 @@
 
 		<script src="jquery/jquery-3.3.1.min.js"></script>
 		<script src="js/three.js"></script>
-		<script src="js/Loader.js"></script>
+		<!-- <script src="js/Loader.js"></script> -->
 
-		<script src="js/controls/OrbitControls.js"></script>
-		<script src="js/controls/NiceControls.js"></script>
+		<script src="js/OrbitControls.js"></script>
+		<script src="js/NiceControls.js"></script>
 		<script src="js/loaders/MTLLoader.js"></script>
 		<script src="js/loaders/OBJLoader.js"></script>
 		<script src="js/loaders/DDSLoader.js"></script>
@@ -149,7 +148,7 @@
 			var scene, camera, controls, stats;
 			var renderer, mixer;
 			var clock = new THREE.Clock();
-			var url = 'scene.json';
+			var url = 'base_scene.json';
 			var SCENE_WIDTH;
 			var SCENE_HEIGHT;
 			var container = document.getElementById( 'container' );
@@ -164,13 +163,9 @@
 			var _dragging = false;
 
 			var _enableRaycaster = true;
-			// var selectObject;
-			var loader
 
 
 			$(function() {
-				// stats = new Stats();
-				// container.appendChild( stats.dom );
 				SCENE_WIDTH = container.clientWidth;
 				SCENE_HEIGHT = window.innerHeight;
 
@@ -284,11 +279,6 @@
 					loadOBJ("models/washingmachine/washingmachine.mtl", 
 						"models/washingmachine/washingmachine.obj", 
 						{p: {x: 1000, y: 300}});
-					// loadOBJ("models/lamp/", "lamp", "lamp", {x: -1000, y: 300});
-					// loadOBJ("models/chair/", "chair", "chair", {x: 0, y: -1000});
-					// loadOBJ("models/table/", "table", "table", {x: 100, y: 0});
-					// loadOBJ("models/sofa/", "sofa1", "sofa1", {x: 200, y: 300});
-					// loadOBJ("models/sofa/", "sofa2", "sofa2", {x: 800, y: -600});
 
 					loadOBJ("models/table_sofa.mtl", 
 						"models/table_sofa.obj");
@@ -317,7 +307,6 @@
 					orbitControls.minDistance = 1000;
 					orbitControls.maxDistance = 50000;
 					// orbitControls.maxPolarAngle = Math.PI / 2;
-
 
 					orbitControls.addEventListener('change', function (event) {
 						updateWall();
@@ -661,32 +650,24 @@
 					if(data && data.scene != undefined && data.scene.scenePath != undefined) {
 						cleanScene();
 
-						loadScene(data.scene.scenePath, function ( loadedScene ) {
-							// scene = loadedScene;
-							// scene.background = new THREE.Color( 0xffffff );
+						sceneObjectIds = [];
 
-							sceneObjectIds = [];
+						//reset camera posision
+						camera.position.set( 0, -8500, 4000 );
+						camera.up.set(0, 0, 1);
+						camera.lookAt(new THREE.Vector3(0,0,0));
 
-							if ( camera === undefined ) {
-								camera = new THREE.PerspectiveCamera( 60, SCENE_WIDTH / SCENE_HEIGHT, 100, 1000000 );
+						var obj;
+						for (var i = 0; i < data.scene.objects.length; i++) {
+							obj = data.scene.objects[i];
+
+							if(obj.loader == "OBJLoader") {
+								loadOBJ(obj.path2, 
+									obj.path1, obj.t);
 							}
-							//reset camera posision
-							camera.position.set( 0, -8500, 4000 );
-							camera.up.set(0, 0, 1);
-							camera.lookAt(new THREE.Vector3(0,0,0));
-
-							var obj;
-							for (var i = 0; i < data.scene.objects.length; i++) {
-								obj = data.scene.objects[i];
-
-								if(obj.loader == "OBJLoader") {
-									loadOBJ(obj.path2, 
-										obj.path1, obj.t);
-								}
-							}
-							updateWall();
-							requestAnimationFrame( render );
-						});
+						}
+						updateWall();
+						requestAnimationFrame( render );
 
 					}
 				}
