@@ -95,14 +95,13 @@
 	<body>
 		<div id="left-panel">
 			<div class="category_list">
-				<div class="category_item"><img src="images/test.jpg" width="100" height="100" /></div>
+				<div class="category_item"><img src="images/washingmachine.png" width="100" height="100" /></div>
 			</div>
 		</div>
 		<div id="container"></div>
 		<div class="object-menu-warp">
 			<div class="object-menu">
 				<div id="objDelete" class="menu-item delete">
-					<!-- <svg class="icon icon-delete"><use xlink:href="#delete"></use></svg> -->
 					删除
 				</div>
 			</div>
@@ -111,7 +110,6 @@
 			<input id="cleanScene" type="button" name="清空场景" value="清空场景"><br/><br/>
 			<input id="saveScene" type="button" name="保存场景" value="保存场景"><br/><br/>
 			<input id="importScene" type="button" name="导入场景" value="导入场景"><br/><br/>
-			<!-- <input id="importObject" type="button" name="导入场景" value="导入对象"><br/><br/> -->
 		</div>
 
 		
@@ -123,15 +121,11 @@
 				高：<input id="obj_z" type="text" name="z"/> mm<br/><br/>
 
 				<input id="applyBtn" type="button" name="应用" value="应用"><br/><br/>
-				<!-- <input id="exportObject" type="button" name="导出对象" value="导出对象"><br/><br/> -->
-
-				
 			</div>
 		</div>
 
 		<script src="jquery/jquery-3.3.1.min.js"></script>
 		<script src="js/three.js"></script>
-		<!-- <script src="js/Loader.js"></script> -->
 
 		<script src="js/OrbitControls.js"></script>
 		<script src="js/NiceControls.js"></script>
@@ -262,11 +256,6 @@
 				loadScene(url, function ( loadedScene ) {
 					scene = loadedScene;
 					scene.background = new THREE.Color( 0xffffff );
-					// If the loaded file contains a perspective camera, use it with adjusted aspect ratio...
-					scene.traverse( function ( sceneChild ) {
-
-					} );
-
 					sceneObjectIds = [];
 
 					if ( camera === undefined ) {
@@ -299,14 +288,13 @@
 					
 					addMirror(scene);
 
-
+					//场景控制
 					orbitControls = new THREE.OrbitControls( camera, container);
 					orbitControls.enableDamping = true;
 					orbitControls.dampingFactor = 0.8;
 					orbitControls.screenSpacePanning = false;
 					orbitControls.minDistance = 1000;
 					orbitControls.maxDistance = 50000;
-					// orbitControls.maxPolarAngle = Math.PI / 2;
 
 					orbitControls.addEventListener('change', function (event) {
 						updateWall();
