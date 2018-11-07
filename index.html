@@ -206,7 +206,7 @@
 
 						}
 
-						parseScene( data, file, filename );
+						parseScene( data);
 
 					}, false );
 					reader.readAsText( file );
@@ -246,14 +246,14 @@
 				    }
 				}, false);
 
-				function loadScene(url, complete){
+				function loadBaseScene(url, complete){
 					new THREE.ObjectLoader().load( url, function(loadedScene){
 						complete(loadedScene);
 					});
 				}
 
 				// Load a scene with objects, lights and camera from a JSON file
-				loadScene(url, function ( loadedScene ) {
+				loadBaseScene(url, function ( loadedScene ) {
 					scene = loadedScene;
 					scene.background = new THREE.Color( 0xffffff );
 					sceneObjectIds = [];
@@ -265,25 +265,29 @@
 					}
 					camera.lookAt(new THREE.Vector3(0,0,0));
 
-					loadOBJ("models/washingmachine/washingmachine.mtl", 
-						"models/washingmachine/washingmachine.obj", 
-						{p: {x: 1000, y: 300}});
+					$.getJSON("scene.json", function(data){
+						parseScene(data);
+					});
 
-					loadOBJ("models/table_sofa.mtl", 
-						"models/table_sofa.obj");
-					loadOBJ("models/cabinet/cabinet.mtl", 
-						"models/cabinet/cabinet.obj", 
-						{p: {x: 0, y:2200}});
-					loadOBJ("models/television/television.mtl", 
-						"models/television/television.obj", 
-						{p: {x: 800, y:2200, z:1000}});
+					// loadOBJ("models/washingmachine/washingmachine.mtl", 
+					// 	"models/washingmachine/washingmachine.obj", 
+					// 	{p: {x: 1000, y: 300}});
 
-					loadOBJ("models/airconditioner/airconditioner.mtl", 
-						"models/airconditioner/airconditioner.obj", 
-						{p: {x: 1000, y: -200}});
-					loadOBJ("models/airconditioner/airconditioner2.mtl", 
-						"models/airconditioner/airconditioner2.obj", 
-						{p: {x: 2000, y: -800}});
+					// loadOBJ("models/table_sofa.mtl", 
+					// 	"models/table_sofa.obj");
+					// loadOBJ("models/cabinet/cabinet.mtl", 
+					// 	"models/cabinet/cabinet.obj", 
+					// 	{p: {x: 0, y:2200}});
+					// loadOBJ("models/television/television.mtl", 
+					// 	"models/television/television.obj", 
+					// 	{p: {x: 800, y:2200, z:1000}});
+
+					// loadOBJ("models/airconditioner/airconditioner.mtl", 
+					// 	"models/airconditioner/airconditioner.obj", 
+					// 	{p: {x: 1000, y: -200}});
+					// loadOBJ("models/airconditioner/airconditioner2.mtl", 
+					// 	"models/airconditioner/airconditioner2.obj", 
+					// 	{p: {x: 2000, y: -800}});
 					
 					
 					addMirror(scene);
@@ -364,9 +368,10 @@
 						color: 0x889999,
 						recursion: 1
 					} );
-					verticalMirror.userData.selectUUID = verticalMirror.uuid;
+					// verticalMirror.userData.selectUUID = verticalMirror.uuid;
 					verticalMirror.position.y = 2500;
-					verticalMirror.position.z = 1200;
+					verticalMirror.position.x = -2000;
+					verticalMirror.position.z = 600;
 					verticalMirror.rotation.x = Math.PI / 2;
 
 					scene.add( verticalMirror );
@@ -553,10 +558,11 @@
 				$('#applyBtn').click(function () {
 					var selectObject = transformControls.object;
 					if(selectObject) {
-						selectObject.scale.x = $('#obj_x').val()/transformControls.objectSize.x * selectObject.scale.x;
-						selectObject.scale.y = $('#obj_z').val()/transformControls.objectSize.z * selectObject.scale.y;
-						selectObject.scale.z = $('#obj_y').val()/transformControls.objectSize.y * selectObject.scale.z;
+						selectObject.scale.x = $('#obj_x').val()/transformControls.objectSize.x;
+						selectObject.scale.y = $('#obj_z').val()/transformControls.objectSize.z;
+						selectObject.scale.z = $('#obj_y').val()/transformControls.objectSize.y;
 						requestAnimationFrame( render );
+						transformControls.updateBoxSize();
 					}
 				});
 
@@ -633,7 +639,7 @@
 					}
 				}
 
-				function parseScene(data, file, filename) {
+				function parseScene(data) {
 					console.log(data);
 					if(data && data.scene != undefined && data.scene.scenePath != undefined) {
 						cleanScene();

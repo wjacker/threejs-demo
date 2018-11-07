@@ -1,5 +1,5 @@
 /*
- * @author jack
+ * @author jack / https://github.com/wjacker
  */
 (function () {
 	'use strict';
@@ -618,7 +618,8 @@
 			this.object.rotation.y = 0;
 			this.objectSize = this.box.setFromObject(scope.object).getSize();
 			this.object.rotation.y = rotationZ;
-			this.boxSize = this.box.setFromObject(scope.object).getSize();
+			this.updateBoxSize();
+			// this.boxSize = this.box.setFromObject(scope.object).getSize();
 			// this.boxCenter = this.box.getCenter();
 
 			this.editZPanel = new THREE.NiceComponentVertial();
@@ -628,6 +629,12 @@
 			this.rotateControl = new THREE.NiceComponentRotate();
 			this.rotateControl.rotationZ = rotationZ;
 			this.add(this.rotateControl);
+		}
+
+		this.updateBoxSize = function() {
+			if ( scope.object == undefined ) return;
+			this.boxSize = this.box.setFromObject(scope.object).getSize();
+			this.boxHelper.setFromObject(scope.object);
 		}
 
 		this.dispose = function () {
